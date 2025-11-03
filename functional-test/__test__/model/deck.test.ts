@@ -23,7 +23,7 @@ describe("Initial deck", () => {
   })
   it("contains numbered cards of every legal number and color", () => {
     const numberedDeck = initialDeck.filter(card => card.type === 'NUMBERED')
-    const numberedCardsByColor = _.groupBy(numberedDeck, card => card.color)
+    const numberedCardsByColor = _.groupBy(numberedDeck.toArray(), card => card.color)
     _.forEach(numberedCardsByColor, cards => {
       const cardsByNumber = _.groupBy(cards, card => card.number)
       _.forEach(cardsByNumber, (cards, number) => {
@@ -39,7 +39,7 @@ describe("Initial deck", () => {
   })
   it("contains 2 skip cards of each color", () => {
     const skipCards = initialDeck.filter(card => card.type === 'SKIP')
-    const skipCardsByColor = _.groupBy(skipCards, card => card.color)
+    const skipCardsByColor = _.groupBy(skipCards.toArray(), card => card.color)
     _.forEach(skipCardsByColor, cards => expect(cards.length).toEqual(2))
   })
   it("contains 8 reverse cards", () => {
@@ -47,7 +47,7 @@ describe("Initial deck", () => {
   })
   it("contains 2 reverse cards of each color", () => {
     const reverseCards = initialDeck.filter(card => card.type === 'REVERSE')
-    const reverseCardsByColor = _.groupBy(reverseCards, card => card.color)
+    const reverseCardsByColor = _.groupBy(reverseCards.toArray(), card => card.color)
     _.forEach(reverseCardsByColor, cards => expect(cards.length).toEqual(2))
   })
   it("contains 8 draw cards", () => {
@@ -55,7 +55,7 @@ describe("Initial deck", () => {
   })
   it("contains 2 draw cards of each color", () => {
     const drawCards = initialDeck.filter(card => card.type === 'DRAW')
-    const drawCardsByColor = _.groupBy(drawCards, card => card.color)
+    const drawCardsByColor = _.groupBy(drawCards.toArray(), card => card.color)
     _.forEach(drawCardsByColor, cards => expect(cards.length).toEqual(2))
   })
   it("contains 4 wild cards", () => {
