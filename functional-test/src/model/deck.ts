@@ -7,7 +7,12 @@ const cardNumbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 type CardNumber = typeof cardNumbers[number];
 
 type NumberCard = { type: 'NUMBERED', color: Color, number: CardNumber }
-type SpecialCard = { type: 'SKIP' | 'REVERSE' | 'DRAW', color: Color }
+type SkipCard = { type: 'SKIP', color: Color }
+type ReverseCard = { type: 'REVERSE', color: Color }
+type DrawCard = { type: 'DRAW', color: Color }
+
+type SpecialCard = SkipCard | ReverseCard | DrawCard
+
 type WildCard = { type: 'WILD' | 'WILD DRAW' }
 type ColoredCard = Readonly<NumberCard | SpecialCard>
 
@@ -23,28 +28,28 @@ type TypedCard<T extends Type> = CardMap[T]
 type Card = Readonly<TypedCard<Type>>
 
 export class Deck<C extends Card = Card> {
-  readonly cards: List<C>
-  readonly length: number
+    readonly cards: List<C>
+    readonly length: number
 
-  constructor(cards: List<C>) {
-    this.cards = cards
-    this.length = this.cards.size
-  }
+    constructor(cards: List<C>) {
+        this.cards = cards
+        this.length = this.cards.size
+    }
 
-  // Filter overloadig so that NumberCard is narrowed in the test (maybe use elsewhere later)
-  filter<S extends C>(predicate: (card: C, index: number) => card is S): Deck<S>
-  filter(predicate: (card: C, index: number) => boolean): Deck<C>
-  filter(predicate: any): Deck<C> {
-    const cards = this.cards.filter(predicate as any) as List<any>
-    return new Deck(cards)
-  }
-  map<R>(mapper: (card: C, index: number) => R) {
-    return this.cards.map(mapper)
-  }
+    // Filter overloadig so that NumberCard is narrowed in the test (maybe use elsewhere later)
+    filter<S extends C>(predicate: (card: C, index: number) => card is S): Deck<S>
+    filter(predicate: (card: C, index: number) => boolean): Deck<C>
+    filter(predicate: any): any {
+        const cards = this.cards.filter(predicate as any)
+        return new Deck(cards)
+    }
+    map<R>(mapper: (card: C, index: number) => R) {
+        return this.cards.map(mapper)
+    }
 
-  toArray(): C[] {
-    return this.cards.toArray()
-  }
+    toArray(): C[] {
+        return this.cards.toArray()
+    }
 }
 
 
