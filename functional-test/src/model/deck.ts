@@ -1,4 +1,5 @@
 import { List } from 'immutable'
+import { Shuffler } from '../utils/random_utils';
 
 type Type = 'NUMBERED' | 'SKIP' | 'REVERSE' | 'DRAW' | 'WILD' | 'WILD DRAW'
 const colors = ['BLUE', 'RED', 'GREEN', 'YELLOW'] as const;
@@ -50,6 +51,39 @@ export class Deck<C extends Card = Card> {
     toArray(): C[] {
         return this.cards.toArray()
     }
+
+    deal() : [C|undefined, Deck<C>]{
+        const card = this.cards.first()
+        const rest = this.cards.shift()
+        return [card,new Deck(rest)]
+    }
+
+    shuffle(shuffler:Shuffler<C>) : Deck<C>{
+        const cardsShuffled = List(shuffler(this.cards.toArray()))
+        return new Deck(cardsShuffled)
+    }
+
+    getDeck() : List<C>{
+        return List(this.cards)
+    }
+
+    get size() : number{
+        return this.cards.size
+    }
+
+    top() : C|undefined{
+        return this.cards.first()
+    }
+    // Maybe it won't be needed as compared to the OOP, we handle top and peek the same way here
+    peek() : C|undefined{
+        return this.cards.first()
+    }
+
+    getDeckUnderTop() : Deck<C>{
+        return new Deck(this.cards.shift())
+    }
+
+
 }
 
 
