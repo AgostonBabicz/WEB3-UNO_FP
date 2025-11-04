@@ -3,7 +3,7 @@ import { Shuffler } from '../utils/random_utils';
 
 type Type = 'NUMBERED' | 'SKIP' | 'REVERSE' | 'DRAW' | 'WILD' | 'WILD DRAW'
 const colors = ['BLUE', 'RED', 'GREEN', 'YELLOW'] as const;
-type Color = typeof colors[number];
+export type Color = typeof colors[number];
 const cardNumbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 type CardNumber = typeof cardNumbers[number];
 
@@ -26,7 +26,11 @@ type CardMap =
     & Record<WildKey, WildCard>
 
 type TypedCard<T extends Type> = CardMap[T]
-type Card = Readonly<TypedCard<Type>>
+export type Card = Readonly<TypedCard<Type>>
+
+export function isColored(card:Card) : card is ColoredCard{
+    return card.type !== 'WILD' && card.type !== 'WILD DRAW'
+}
 
 export class Deck<C extends Card = Card> {
     readonly cards: List<C>
