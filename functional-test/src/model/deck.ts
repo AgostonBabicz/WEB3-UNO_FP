@@ -31,6 +31,11 @@ export type Card = Readonly<TypedCard<Type>>
 export function isColored(card:Card) : card is ColoredCard{
     return card.type !== 'WILD' && card.type !== 'WILD DRAW'
 }
+export function isWild(card: Card) : card is WildCard{
+    return card.type==='WILD'||card.type==="WILD DRAW"
+}
+
+
 
 export class Deck<C extends Card = Card> {
     readonly cards: List<C>
