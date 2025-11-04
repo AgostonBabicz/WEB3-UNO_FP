@@ -22,30 +22,31 @@ type CardMap =
 type TypedCard<T extends Type> = CardMap[T]
 type Card = Readonly<TypedCard<Type>>
 
+export class Deck<C extends Card = Card> {
+  readonly cards: List<C>
+  readonly length: number
 
-export class Deck {
-    readonly cards: List<Card>
-    readonly length: number
+  constructor(cards: List<C>) {
+    this.cards = cards
+    this.length = this.cards.size
+  }
 
-    constructor(cards: List<Card>) {
-        this.cards = cards
-        this.length = this.cards.size
-    }
+  // Filter overloadig so that NumberCard is narrowed in the test (maybe use elsewhere later)
+  filter<S extends C>(predicate: (card: C, index: number) => card is S): Deck<S>
+  filter(predicate: (card: C, index: number) => boolean): Deck<C>
+  filter(predicate: any): Deck<C> {
+    const cards = this.cards.filter(predicate as any) as List<any>
+    return new Deck(cards)
+  }
+  map<R>(mapper: (card: C, index: number) => R) {
+    return this.cards.map(mapper)
+  }
 
-    filter(predicate: (card: Card, index: number) => boolean): Deck {
-        const cards = this.cards.filter(predicate)
-        return new Deck(cards)
-    }
-
-    map<U>(mapper: (card: Card, index: number) => U): List<U> {
-        return this.cards.map(mapper);
-    }
-
-    toArray(): ReadonlyArray<Card> {
-        return this.cards.toArray();
-    }
-
+  toArray(): C[] {
+    return this.cards.toArray()
+  }
 }
+
 
 export function createInitialDeck(): Deck {
     const cards: List<Card> = List<Card>().withMutations(cs => {
@@ -73,5 +74,5 @@ export function createInitialDeck(): Deck {
         cs.push({ type: 'NUMBERED', color: 'GREEN', number: 0 })
         cs.push({ type: 'NUMBERED', color: 'YELLOW', number: 0 })
     })
-    return new Deck(cards)
+    return new Deck<Card>(cards)
 }
