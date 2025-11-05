@@ -12,6 +12,10 @@ export class PlayerHand {
         return new PlayerHand(this.playerHand.push(card))
     }
 
+    remove(card:Card):PlayerHand{
+        return new PlayerHand(this.playerHand.remove(this.playerHand.indexOf(card)))
+    }
+
     getPlayerHand():List<Card>{
         return this.playerHand
     }
@@ -27,5 +31,9 @@ export class PlayerHand {
 
     hasColor(color : Color) : boolean{
         return this.playerHand.some(c=>isColored(c) && c.color === color)
+    }
+
+    toArray():Card[]{
+        return this.playerHand.toArray()
     }
 }

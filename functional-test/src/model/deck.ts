@@ -92,6 +92,10 @@ export class Deck<C extends Card = Card> {
         return new Deck(this.cards.shift())
     }
 
+    putCardOnTop(card:C) : Deck<C>{
+        return new Deck(this.cards.unshift(card))
+    }
+
 
 }
 
@@ -123,4 +127,13 @@ export function createInitialDeck(): Deck {
         cs.push({ type: 'NUMBERED', color: 'YELLOW', number: 0 })
     })
     return new Deck<Card>(cards)
+}
+
+export function createEmptyDeck(): Deck {
+  return new Deck(List());
+}
+
+
+export function createDeckWithCards(cards: Card[]): Deck {
+  return new Deck(List(cards));
 }

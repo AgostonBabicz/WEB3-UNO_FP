@@ -1,6 +1,6 @@
 import { Shuffler, standardShuffler } from '../../src/utils/random_utils'
 import * as deck from '../../src/model/deck'
-// import * as round from '../../src/model/round'
+import * as round from '../../src/model/round'
 // import * as uno from '../../src/model/uno'
 
 export function createInitialDeck(): deck.Deck {
@@ -15,12 +15,12 @@ export type RoundProps = {
 }
 
 export function createRound({
-    players, 
-    dealer, 
-    shuffler = standardShuffler,
-    cardsPerPlayer = 7
-  }: RoundProps): round.Round {
-  return round.createRound(players, dealer, shuffler, cardsPerPlayer)
+  players,
+  dealer,
+  shuffler = standardShuffler,
+  cardsPerPlayer = 7
+}: RoundProps){
+  return round.createRound(players, dealer, shuffler, cardsPerPlayer);
 }
 
 export function createGame(props: Partial<uno.Props>): uno.Game {
