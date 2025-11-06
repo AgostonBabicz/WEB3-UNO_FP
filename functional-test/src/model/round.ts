@@ -27,6 +27,7 @@ export type Round = Readonly<{
   unoProtectedForWindow: boolean;
   unoSayersSinceLastAction: Set<number>;
   playerInTurn: number | undefined;
+  scored?: boolean; 
 }>;
 
 export function createRound(
@@ -125,17 +126,22 @@ function resolveStart(s: Round): Round {
     }
     case "SKIP":
       return setTurn(base, mod(base.dealer + 2 * dir, pc));
+
     case "REVERSE": {
       const ndir = (-dir) as Direction;
-      return setTurn(withState(base, {
+      const base2 = withState(base, {
         direction: ndir,
         currentDirection: ndir === 1 ? "clockwise" : "counterclockwise",
-      }), mod(base.dealer + ndir, pc));
+      });
+      const advance = pc === 2 ? 2 * ndir : ndir;
+      return setTurn(base2, mod(base.dealer + advance, pc));
     }
+
     default:
       return setTurn(base, mod(base.dealer + dir, pc));
   }
 }
+
 
 
 function drawTo(s: Round, p: number, n = 1): [void, Round] {
@@ -168,7 +174,7 @@ export function player(state: Round, ix: number): string {
   return state.players[ix]
 }
 
-export function playerHand(state: Round, ix: number|undefined): Card[] {
+export function playerHand(state: Round, ix: number | undefined): Card[] {
   return state.playerHands.get(ix!)?.getPlayerHand().toArray()!
 }
 
@@ -193,22 +199,27 @@ export function canPlayAny(state: Round): boolean {
   return playerHand(state, p).some((_, ix) => canPlay(ix, state));
 }
 export function canPlay(cardIx: number, state: Round): boolean {
-  if (winner(state) !== undefined) {
-    return false
-  }
-  const p = state.currentPlayerIndex;
-  const hand = state.playerHands.get(p)
-  const size = hand?.size() ?? 0
-  if (cardIx < 0 || cardIx >= size!) return false;
-  const top = state.discardDeck.top()
-  const played = playerHand(state, p)[cardIx]
-  const effectiveColor = state.currentColor
+  if (winner(state) !== undefined) return false;
+
+  // Use the real turn holder; fall back just in case
+  const p = state.playerInTurn ?? state.currentPlayerIndex;
+
+  const hand = state.playerHands.get(p);
+  const size = hand?.size() ?? 0;
+  if (cardIx < 0 || cardIx >= size) return false;
+
+  const top = state.discardDeck.top();
+  const played = playerHand(state, p)[cardIx];
+  const effectiveColor = state.currentColor;
 
   if (isColored(played)) {
     switch (top!.type) {
       case 'NUMBERED':
         if (played.type === 'NUMBERED') {
-          return played.color === effectiveColor || played.number === (isColored(top!) ? top.number : -1);
+          return (
+            played.color === effectiveColor ||
+            played.number === (isColored(top!) ? top.number : -1)
+          );
         }
         return played.color === effectiveColor;
 
@@ -226,18 +237,15 @@ export function canPlay(cardIx: number, state: Round): boolean {
         return played.color === effectiveColor;
     }
   } else {
-    if (played.type === 'WILD') {
-      return true;
-    }
+    if (played.type === 'WILD') return true;
     if (played.type === 'WILD DRAW') {
-      if (effectiveColor) {
-        return !hand!.hasColor(effectiveColor);
-      }
+      if (effectiveColor) return !hand!.hasColor(effectiveColor);
       return true;
     }
   }
   return false;
 }
+
 
 export function play(cardIx: number, askedColor: Color | undefined, state: Round): Round {
   let s = ensureUnoState(state);
@@ -247,7 +255,7 @@ export function play(cardIx: number, askedColor: Color | undefined, state: Round
   }
 
   const p = s.playerInTurn;
-  if(p===undefined){
+  if (p === undefined) {
     throw new Error("It's not any player's turn");
   }
   const handArr = playerHand(s, p);
@@ -348,8 +356,13 @@ export function play(cardIx: number, askedColor: Color | undefined, state: Round
 
   const w = winner(s);
   if (w !== undefined) {
-    s = withState(s, { playerInTurn: undefined, resolving: false, unoSayersSinceLastAction: new Set<number>() });
-    return s;
+    s = withState(s, {
+      playerInTurn: undefined,
+      currentPlayerIndex: -1 as unknown as number,
+      resolving: false,
+      unoSayersSinceLastAction: new Set<number>(),
+      scored: false,
+    });
   }
   return s;
 }
@@ -364,7 +377,7 @@ export function draw(state: Round): Round {
     s = withState(s, { lastUnoSayer: null });
   }
 
-  if (winner(s) !== undefined || s.playerInTurn===undefined) throw new Error("Cannot draw after having a winner");
+  if (winner(s) !== undefined || s.playerInTurn === undefined) throw new Error("Cannot draw after having a winner");
 
   const p = s.playerInTurn;
 
