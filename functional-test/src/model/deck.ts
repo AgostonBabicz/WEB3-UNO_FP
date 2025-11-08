@@ -7,14 +7,14 @@ export type Color = typeof colors[number];
 const cardNumbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 type CardNumber = typeof cardNumbers[number];
 
-type NumberCard = { type: 'NUMBERED', color: Color, number: CardNumber }
-type SkipCard = { type: 'SKIP', color: Color }
-type ReverseCard = { type: 'REVERSE', color: Color }
-type DrawCard = { type: 'DRAW', color: Color }
+type NumberCard  = Readonly<{ type: 'NUMBERED', color: Color, number: CardNumber }>
+type SkipCard    = Readonly<{ type: 'SKIP', color: Color }>
+type ReverseCard = Readonly<{ type: 'REVERSE', color: Color }>
+type DrawCard    = Readonly<{ type: 'DRAW', color: Color }>
 
 type SpecialCard = SkipCard | ReverseCard | DrawCard
 
-type WildCard = { type: 'WILD' | 'WILD DRAW' }
+type WildCard    = Readonly<{ type: 'WILD' | 'WILD DRAW' }>
 type ColoredCard = Readonly<NumberCard | SpecialCard>
 
 type NumKey = Extract<Type, 'NUMBERED'>
@@ -39,11 +39,9 @@ export function isWild(card: Card) : card is WildCard{
 
 export class Deck<C extends Card = Card> {
     readonly cards: List<C>
-    readonly length: number
 
     constructor(cards: List<C>) {
         this.cards = cards
-        this.length = this.cards.size
     }
 
     // Filter overloadig so that NumberCard is narrowed in the test (maybe use elsewhere later)
@@ -58,7 +56,7 @@ export class Deck<C extends Card = Card> {
     }
 
     toArray(): C[] {
-        return this.cards.toArray()
+        return this.cards.toArray() // toArray() is fine, returns mutable snapshot of immutable doesnt expose internal
     }
 
     deal() : [C|undefined, Deck<C>]{
@@ -72,10 +70,6 @@ export class Deck<C extends Card = Card> {
         return new Deck(cardsShuffled)
     }
 
-    getDeck() : List<C>{
-        return List(this.cards)
-    }
-
     get size() : number{
         return this.cards.size
     }
@@ -83,13 +77,14 @@ export class Deck<C extends Card = Card> {
     top() : C|undefined{
         return this.cards.first()
     }
+    
     // Maybe it won't be needed as compared to the OOP, we handle top and peek the same way here
     peek() : C|undefined{
         return this.cards.first()
     }
 
     getDeckUnderTop() : Deck<C>{
-        return new Deck(this.cards.shift())
+        return new Deck(this.cards.shift()) 
     }
 
     putCardOnTop(card:C) : Deck<C>{

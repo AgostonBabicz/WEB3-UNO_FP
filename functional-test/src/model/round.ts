@@ -1,6 +1,6 @@
 import { Shuffler } from "../utils/random_utils";
 import { List } from "immutable";
-import { Deck, Card, Color, isColored, createInitialDeck, createEmptyDeck, isWild } from "./deck";
+import { Deck, Card, Color, isColored, createInitialDeck, createEmptyDeck, isWild, createDeckWithCards  } from "./deck";
 import { PlayerHand } from "./player_hand";
 import { mod } from "../utils/mod";
 import { withState } from "../utils/updater";
@@ -31,7 +31,7 @@ export type Round = Readonly<{
 }>;
 
 export function createRound(
-  players: string[],
+  players: ReadonlyArray<string>,
   dealer: number,
   shuffler: Shuffler<Card>,
   cardsPerPlay: number): Round {
@@ -43,7 +43,7 @@ function setTurn(s: Round, idx: number): Round {
 }
 
 function makeRoundState(
-  players: string[],
+  players: ReadonlyArray<string>,
   dealer: number,
   shuffler: Shuffler<Card>,
   cardsPerPlay: number
@@ -145,26 +145,43 @@ function resolveStart(s: Round): Round {
 
 
 function drawTo(s: Round, p: number, n = 1): [void, Round] {
-  let state = s
+  let state = s;
+
   for (let i = 0; i < n; i++) {
-    let [card, nd] = state.drawDeck.deal()
+    let [card, nd] = state.drawDeck.deal();
+
+    // If draw deck is empty, we reshuffle discard (minus top card) into draw
     if (!card) {
-      const top = state.discardDeck.top()
-      const underDeck = state.discardDeck.getDeckUnderTop()
-      const under = underDeck.getDeck()
-      if (!under || under.size === 0) throw new Error("No cards left to draw")
-      let reshuffled = new Deck(under)
-      if (state.shuffler) reshuffled = reshuffled.shuffle(state.shuffler)
-        ;[card, nd] = reshuffled.deal()
-      if (!card) throw new Error("No cards left to draw")
-      state = withState(state, { discardDeck: new Deck(top ? List([top]) : List()) })
+      const top = state.discardDeck.top();                      // keep the visible top card
+      const underDeck = state.discardDeck.getDeckUnderTop();    // everything under top
+      const under = underDeck.toArray();                        // plain snapshot array (safe)
+
+      if (under.length === 0) throw new Error("No cards left to draw");
+
+      // Wrap plain array back into a Deck (preserves immutability)
+      let reshuffled = createDeckWithCards(under);
+      if (state.shuffler) reshuffled = reshuffled.shuffle(state.shuffler);
+
+      [card, nd] = reshuffled.deal();
+      if (!card) throw new Error("No cards left to draw");
+
+      // Rebuild discard to only contain the top card (or be empty)
+      state = withState(state, {
+        discardDeck: top ? createEmptyDeck().putCardOnTop(top) : createEmptyDeck(),
+      });
     }
+
+    // Update draw deck + player's hand immutably
     state = withState(state, {
       drawDeck: nd,
-      playerHands: state.playerHands.update(p, h => (h ?? new PlayerHand(List())).add(card!)),
-    })
+      playerHands: state.playerHands.update(
+        p,
+        h => (h ?? new PlayerHand(List())).add(card!)
+      ),
+    });
   }
-  return [undefined, state]
+
+  return [undefined, state];
 }
 
 export function player(state: Round, ix: number): string {
@@ -174,9 +191,13 @@ export function player(state: Round, ix: number): string {
   return state.players[ix]
 }
 
-export function playerHand(state: Round, ix: number | undefined): Card[] {
-  return state.playerHands.get(ix!)?.getPlayerHand().toArray()!
+
+export function getHand(state: Round, ix: number): readonly Card[] {
+  const hand = state.playerHands.get(ix);
+  if (!hand) throw new Error("Hand not found");
+  return hand.toArray();
 }
+
 
 export function discardPile(state: Round): Deck {
   return state.discardDeck;
@@ -191,17 +212,16 @@ export function topOfDiscard(state: Round): Card | undefined {
 }
 
 export function canPlayAny(state: Round): boolean {
-  if (winner(state) !== undefined) {
-    return false
-  }
+  if (winner(state) !== undefined) return false;
   const p = state.playerInTurn;
   if (p === undefined) return false;
-  return playerHand(state, p).some((_, ix) => canPlay(ix, state));
+  return getHand(state, p).some((_, ix) => canPlay(ix, state));
 }
+
 export function canPlay(cardIx: number, state: Round): boolean {
   if (winner(state) !== undefined) return false;
 
-  // Use the real turn holder; fall back just in case
+  // use real turn holder; fall back just in case
   const p = state.playerInTurn ?? state.currentPlayerIndex;
 
   const hand = state.playerHands.get(p);
@@ -209,7 +229,7 @@ export function canPlay(cardIx: number, state: Round): boolean {
   if (cardIx < 0 || cardIx >= size) return false;
 
   const top = state.discardDeck.top();
-  const played = playerHand(state, p)[cardIx];
+  const played = getHand(state, p)[cardIx]; // snapshot access
   const effectiveColor = state.currentColor;
 
   if (isColored(played)) {
@@ -223,15 +243,9 @@ export function canPlay(cardIx: number, state: Round): boolean {
         }
         return played.color === effectiveColor;
 
-      case 'SKIP':
-        return played.color === effectiveColor || played.type === 'SKIP';
-
-      case 'DRAW':
-        return played.color === effectiveColor || played.type === 'DRAW';
-
-      case 'REVERSE':
-        return played.color === effectiveColor || played.type === 'REVERSE';
-
+      case 'SKIP':    return played.color === effectiveColor || played.type === 'SKIP';
+      case 'DRAW':    return played.color === effectiveColor || played.type === 'DRAW';
+      case 'REVERSE': return played.color === effectiveColor || played.type === 'REVERSE';
       case 'WILD':
       case 'WILD DRAW':
         return played.color === effectiveColor;
@@ -247,18 +261,15 @@ export function canPlay(cardIx: number, state: Round): boolean {
 }
 
 
+
 export function play(cardIx: number, askedColor: Color | undefined, state: Round): Round {
   let s = ensureUnoState(state);
-
-  if (winner(s) !== undefined) {
-    throw new Error("Cannot play after having a winner");
-  }
+  if (winner(s) !== undefined) throw new Error("Cannot play after having a winner");
 
   const p = s.playerInTurn;
-  if (p === undefined) {
-    throw new Error("It's not any player's turn");
-  }
-  const handArr = playerHand(s, p);
+  if (p === undefined) throw new Error("It's not any player's turn");
+
+  const handArr = getHand(s, p);            // snapshot access
   const handSize = handArr.length;
 
   if (handSize === 0 || cardIx < 0 || cardIx >= handSize) {
@@ -389,7 +400,7 @@ export function draw(state: Round): Round {
   if (!card) {
     const top = s.discardDeck.top();
     const underTop = s.discardDeck.getDeckUnderTop();
-    if (underTop.length === 0) throw new Error("No cards left to draw");
+    if (underTop.size === 0) throw new Error("No cards left to draw");
 
     const reshuffled = s.shuffler ? underTop.shuffle(s.shuffler) : underTop;
     [card, rest] = reshuffled.deal();
@@ -412,7 +423,7 @@ export function draw(state: Round): Round {
   if (s.drawDeck.size === 0) {
     const top = s.discardDeck.top();
     const underTop = s.discardDeck.getDeckUnderTop();
-    if (underTop.length > 0) {
+    if (underTop.size > 0) {
       const reshuffled = s.shuffler ? underTop.shuffle(s.shuffler) : underTop;
       s = withState(s, {
         discardDeck: top ? createEmptyDeck().putCardOnTop(top) : createEmptyDeck(),
@@ -461,28 +472,27 @@ export function hasEnded(state: Round): boolean {
 }
 
 export function score(state: Round): number | undefined {
-  const w = winner(state)
-  if (w === undefined) return undefined
-  let total = 0
+  const w = winner(state);
+  if (w === undefined) return undefined;
+
+  let total = 0;
   for (let i = 0; i < state.playerHands.size; i++) {
-    if (i === w) continue
-    const hand = state.playerHands.get(i)
-    total += hand!.getPlayerHand().reduce((acc, curr) => {
+    if (i === w) continue;
+    const hand = state.playerHands.get(i)!;
+    total += hand.toArray().reduce((acc, curr) => {   // snapshot then reduce
       switch (curr.type) {
-        case 'NUMBERED':
-          return acc + curr.number
+        case 'NUMBERED':  return acc + curr.number;
         case 'SKIP':
         case 'REVERSE':
-        case 'DRAW':
-          return acc + 20
+        case 'DRAW':      return acc + 20;
         case 'WILD':
-        case 'WILD DRAW':
-          return acc + 50
+        case 'WILD DRAW': return acc + 50;
       }
-    }, 0)
+    }, 0);
   }
-  return total
+  return total;
 }
+
 
 export function sayUno(playerIx: number, state: Round): Round {
   let s = ensureUnoState(state);

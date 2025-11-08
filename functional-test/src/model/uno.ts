@@ -5,8 +5,8 @@ import { createRound, hasEnded, Round, score, winner } from "./round";
 export type Game = Readonly<{
   readonly playerCount: number
   readonly targetScore: number
-  readonly players: string[]           // arrays, not Immutable.List
-  readonly scores: number[]            // arrays, not Immutable.List
+  readonly players: ReadonlyArray<string>;   
+  readonly scores: ReadonlyArray<number>;          
   readonly currentRound: Round | undefined
   readonly randomizer: Randomizer
   readonly shuffler: Shuffler<Card>
@@ -15,7 +15,7 @@ export type Game = Readonly<{
 }>
 
 export type Props = Readonly<{
-  readonly players: string[]
+  readonly players: ReadonlyArray<string>;
   readonly targetScore: number
   readonly randomizer: Randomizer
   readonly shuffler: Shuffler<Card>
@@ -36,10 +36,10 @@ export function createGame(props: Partial<Props>): Game {
   if (cardsPerPlayer <= 0) throw new Error("A Game requires dealing at least 1 card per player");
 
   const playerCount = players.length;
-  const scores = Array(playerCount).fill(0);
+  const scores: ReadonlyArray<number> = Array(playerCount).fill(0);
 
   const dealer = randomizer(playerCount);
-  const currentRound = createRound(players, dealer, shuffler, cardsPerPlayer);
+  const currentRound = createRound([...players], dealer, shuffler, cardsPerPlayer);
 
   return {
     playerCount,
@@ -90,6 +90,6 @@ export function play(step: RoundStep, g: Game): Game {
 
 export function startNewRound(g: Game): Game {
   const dealer = g.randomizer(g.playerCount);
-  const newRound = createRound(g.players, dealer, g.shuffler, g.cardsPerPlayer);
+  const newRound = createRound([...g.players], dealer, g.shuffler, g.cardsPerPlayer);
   return { ...g, currentRound: newRound };
 }

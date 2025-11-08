@@ -2,38 +2,34 @@ import { List } from "immutable";
 import { Card, Color, isColored } from "./deck";
 
 export class PlayerHand {
-    readonly playerHand : List<Card>
+  readonly cards: List<Card>;
 
-    constructor(playerHand:List<Card>){
-        this.playerHand = playerHand
-    }
+  constructor(cards: List<Card>) {
+    this.cards = cards;
+  }
 
-    add(card:Card):PlayerHand{
-        return new PlayerHand(this.playerHand.push(card))
-    }
+  add(card: Card): PlayerHand {
+    return new PlayerHand(this.cards.push(card));
+  }
 
-    remove(card:Card):PlayerHand{
-        return new PlayerHand(this.playerHand.remove(this.playerHand.indexOf(card)))
-    }
+  remove(card: Card): PlayerHand {
+    return new PlayerHand(this.cards.remove(this.cards.indexOf(card)));
+  }
 
-    getPlayerHand():List<Card>{
-        return this.playerHand
-    }
+  playCard(ix: number): [Card | undefined, PlayerHand] {
+    const card = this.cards.get(ix);
+    return [card, new PlayerHand(this.cards.remove(ix))];
+  }
 
-    playCard(cardIx:number) : [Card|undefined,PlayerHand]{
-        const card = this.playerHand.get(cardIx)
-        return [card,  new PlayerHand(this.playerHand.remove(cardIx))]
-    }
+  size(): number {
+    return this.cards.size;
+  }
 
-    size() : number{
-        return this.playerHand.size
-    }
+  hasColor(color: Color): boolean {
+    return this.cards.some(c => isColored(c) && c.color === color);
+  }
 
-    hasColor(color : Color) : boolean{
-        return this.playerHand.some(c=>isColored(c) && c.color === color)
-    }
-
-    toArray():Card[]{
-        return this.playerHand.toArray()
-    }
+  toArray(): readonly Card[] {
+    return this.cards.toArray();
+  }
 }

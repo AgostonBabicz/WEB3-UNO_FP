@@ -5,16 +5,16 @@ import * as _ from 'lodash'
 describe("Initial deck", () => {
   const initialDeck = createInitialDeck()
   it("contains 19 numbered blue cards", () => {
-    expect(initialDeck.filter(_.matches({type: 'NUMBERED', color: 'BLUE'})).length).toEqual(19)
+    expect(initialDeck.filter(_.matches({type: 'NUMBERED', color: 'BLUE'})).size).toEqual(19)
   })
   it("contains 19 numbered green cards", () => {
-    expect(initialDeck.filter(_.matches({type: 'NUMBERED', color: 'GREEN'})).length).toEqual(19)
+    expect(initialDeck.filter(_.matches({type: 'NUMBERED', color: 'GREEN'})).size).toEqual(19)
   })
   it("contains 19 numbered red cards", () => {
-    expect(initialDeck.filter(_.matches({type: 'NUMBERED', color: 'RED'})).length).toEqual(19)
+    expect(initialDeck.filter(_.matches({type: 'NUMBERED', color: 'RED'})).size).toEqual(19)
   })
   it("contains 19 numbered yellow cards", () => {
-    expect(initialDeck.filter(_.matches({type: 'NUMBERED', color: 'YELLOW'})).length).toEqual(19)
+    expect(initialDeck.filter(_.matches({type: 'NUMBERED', color: 'YELLOW'})).size).toEqual(19)
   })
   it("only contains numbered card with numbers between 0 and 9", () => {
     const numberedDeck = initialDeck.filter(card => card.type === 'NUMBERED')
@@ -35,7 +35,7 @@ describe("Initial deck", () => {
       })
   })
   it("contains 8 skip cards", () => {
-    expect(initialDeck.filter(_.matches({type: 'SKIP'})).length).toEqual(8)
+    expect(initialDeck.filter(_.matches({type: 'SKIP'})).size).toEqual(8)
   })
   it("contains 2 skip cards of each color", () => {
     const skipCards = initialDeck.filter(card => card.type === 'SKIP')
@@ -43,7 +43,7 @@ describe("Initial deck", () => {
     _.forEach(skipCardsByColor, cards => expect(cards.length).toEqual(2))
   })
   it("contains 8 reverse cards", () => {
-    expect(initialDeck.filter(_.matches({type: 'REVERSE'})).length).toEqual(8)
+    expect(initialDeck.filter(_.matches({type: 'REVERSE'})).size).toEqual(8)
   })
   it("contains 2 reverse cards of each color", () => {
     const reverseCards = initialDeck.filter(card => card.type === 'REVERSE')
@@ -51,7 +51,7 @@ describe("Initial deck", () => {
     _.forEach(reverseCardsByColor, cards => expect(cards.length).toEqual(2))
   })
   it("contains 8 draw cards", () => {
-    expect(initialDeck.filter(_.matches({type: 'DRAW'})).length).toEqual(8)
+    expect(initialDeck.filter(_.matches({type: 'DRAW'})).size).toEqual(8)
   })
   it("contains 2 draw cards of each color", () => {
     const drawCards = initialDeck.filter(card => card.type === 'DRAW')
@@ -59,13 +59,13 @@ describe("Initial deck", () => {
     _.forEach(drawCardsByColor, cards => expect(cards.length).toEqual(2))
   })
   it("contains 4 wild cards", () => {
-    expect(initialDeck.filter(_.matches({type: 'WILD'})).length).toEqual(4)
+    expect(initialDeck.filter(_.matches({type: 'WILD'})).size).toEqual(4)
   })
   it("contains 4 wild draw cards", () => {
-    expect(initialDeck.filter(_.matches({type: 'WILD DRAW'})).length).toEqual(4)
+    expect(initialDeck.filter(_.matches({type: 'WILD DRAW'})).size).toEqual(4)
   })
   // Blank cards skipped, since they have no gameplay
   it("contains 108 cards", () => {
-    expect(initialDeck.length).toEqual(108)
+    expect(initialDeck.size).toEqual(108)
   })
 })
