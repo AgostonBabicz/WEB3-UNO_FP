@@ -1,35 +1,36 @@
-import { List } from "immutable";
-import { Card, Color, isColored } from "./deck";
+import { List } from 'immutable'
 
-export class PlayerHand {
-  readonly cards: List<Card>;
+// This one is not functional, but OOP style
 
-  constructor(cards: List<Card>) {
-    this.cards = cards;
-  }
+// export class PlayerHand {
+//   readonly cards: List<Card>
 
-  add(card: Card): PlayerHand {
-    return new PlayerHand(this.cards.push(card));
-  }
+//   constructor(cards: List<Card>) {
+//     this.cards = cards
+//   }
 
-  remove(card: Card): PlayerHand {
-    return new PlayerHand(this.cards.remove(this.cards.indexOf(card)));
-  }
+//   add(card: Card): PlayerHand {
+//     return new PlayerHand(this.cards.push(card))
+//   }
 
-  playCard(ix: number): [Card | undefined, PlayerHand] {
-    const card = this.cards.get(ix);
-    return [card, new PlayerHand(this.cards.remove(ix))];
-  }
+//   remove(card: Card): PlayerHand {
+//     return new PlayerHand(this.cards.remove(this.cards.indexOf(card)))
+//   }
 
-  size(): number {
-    return this.cards.size;
-  }
+//   playCard(ix: number): [Card | undefined, PlayerHand] {
+//     const card = this.cards.get(ix)
+//     return [card, new PlayerHand(this.cards.remove(ix))]
+//   }
 
-  hasColor(color: Color): boolean {
-    return this.cards.some(c => isColored(c) && c.color === color);
-  }
+//   size(): number {
+//     return this.cards.size
+//   }
 
-  toArray(): readonly Card[] {
-    return this.cards.toArray();
-  }
-}
+//   hasColor(color: Color): boolean {
+//     return this.cards.some((c) => isColored(c) && c.color === color)
+//   }
+
+//   toArray(): readonly Card[] {
+//     return this.cards.toArray()
+//   }
+// }

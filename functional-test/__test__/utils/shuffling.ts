@@ -1,42 +1,48 @@
-import { Card } from "../../src/model/deck"
-import { Shuffler, standardShuffler } from "../../src/utils/random_utils"
-import { CardPredicate, CardSpec, is } from "./predicates"
+import { Card } from '../../src/types/deck.types'
+import { Shuffler, standardShuffler } from '../../src/utils/random_utils'
+import { CardPredicate, CardSpec, is } from './predicates'
 import * as _ from 'lodash'
 
-export const deterministicShuffle = (cards: Card[]): Shuffler<Card> => _ => cards
+export const deterministicShuffle =
+  (cards: Card[]): Shuffler<Card> =>
+  (_) =>
+    cards
 
-export function successiveShufflers(...shufflers: Shuffler<Card>[]): Shuffler<Card> {
+export function successiveShufflers(
+  ...shufflers: Shuffler<Card>[]
+): Shuffler<Card> {
   shufflers.reverse()
   let shuffler = shufflers.pop() ?? standardShuffler
   return (cards: readonly Card[]) => {
     let shuffled = shuffler(cards)
     shuffler = shufflers.pop() ?? shuffler
     return shuffled
-  }  
+  }
 }
 
-export const noShuffle: Shuffler<Card> = cs => [...cs]
+export const noShuffle: Shuffler<Card> = (cs) => [...cs]
 
-
-export function constrainedShuffler(...constraints: [number, CardPredicate][]): Shuffler<Card> {
+export function constrainedShuffler(
+  ...constraints: [number, CardPredicate][]
+): Shuffler<Card> {
   return (cards: readonly Card[]) => {
     const cs = [...cards]
     constraints.sort(([a, _], [b, __]) => a - b)
     standardShuffler(cs)
     let foundCards: Card[] = []
-    for(let i = 0; i < constraints.length; i++) {
+    for (let i = 0; i < constraints.length; i++) {
       let [_, predicate] = constraints[i]
       const foundIndex = cs.findIndex(predicate)
       if (foundIndex === -1) throw new Error('Unsatisfiable predicate')
-      foundCards.push(cs[foundIndex])    
+      foundCards.push(cs[foundIndex])
       cs.splice(foundIndex, 1)
-    }  
-    for(let i = 0; i < constraints.length; i++) {
+    }
+    for (let i = 0; i < constraints.length; i++) {
       let [index] = constraints[i]
       cs.splice(index, 0, foundCards[i])
-    }  
+    }
     return cs
-  }  
+  }
 }
 
 export type ShuffleBuilder = {
@@ -51,16 +57,22 @@ export type ShuffleBuilder = {
 }
 
 export function shuffleBuilder(
-    {players, cardsPerPlayer: cardsInHand}: {players: number; cardsPerPlayer: number} = {players: 4, cardsPerPlayer: 7}
-  ): ShuffleBuilder {
+  {
+    players,
+    cardsPerPlayer: cardsInHand,
+  }: { players: number; cardsPerPlayer: number } = {
+    players: 4,
+    cardsPerPlayer: 7,
+  }
+): ShuffleBuilder {
   const constraints: Map<number, CardPredicate> = new Map()
   const topOfDiscardPile = players * cardsInHand
   let currentIndex = 0
   let repetition = 1
 
   function constrain(preds: CardPredicate[]): ShuffleBuilder {
-    for(let i = 0; i < repetition; i++) {
-      for(let pred of preds) {
+    for (let i = 0; i < repetition; i++) {
+      for (let pred of preds) {
         constraints.set(currentIndex++, pred)
       }
     }
@@ -90,16 +102,16 @@ export function shuffleBuilder(
       return builder
     },
     repeat(n: number) {
-        repetition = n
-        return builder
+      repetition = n
+      return builder
     },
     is(...specs: CardSpec[]) {
       return constrain(specs.map(is))
     },
     isnt(...specs: CardSpec[]) {
-      return constrain(specs.map(spec => _.negate(is(spec))))
+      return constrain(specs.map((spec) => _.negate(is(spec))))
     },
-    build: () => constrainedShuffler(...constraints.entries())
+    build: () => constrainedShuffler(...constraints.entries()),
   }
 
   return builder
