@@ -1,1 +1,3 @@
-export const mod = (n: number, m: number) => ((n % m) + m) % m
+export function mod(n: number, m: number): number {
+    return ((n % m) + m) % m;
+}

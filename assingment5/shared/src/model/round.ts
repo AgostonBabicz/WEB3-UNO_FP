@@ -1,456 +1,621 @@
+import { List } from 'immutable'
+import { Card, Color, Deck } from '../types/deck.types'
+import { PlayerHand } from '../types/player_hand.types'
+import { Round, Direction } from '../types/round.types'
 import { mod } from '../utils/mod'
 import { Shuffler } from '../utils/random_utils'
-import { Card, Deck, createInitialDeck, Color, isColored } from './deck'
-import { RoundInterface } from './interfaces/round_interface'
-import { PlayerHand } from './player_hand'
+import { withState } from '../utils/updater'
 
-export class Round implements RoundInterface {
-  playerCount: number
-  private players: string[]
-  private currentPlayerIndex: number
-  private discardDeck: Deck
-  private drawDeck: Deck
-  private playerHands: PlayerHand[]
-  dealer: number
-  shuffler: Shuffler<Card> | undefined
-  cardsPerPlay: number | undefined
-  private startResolved: boolean = false
-  private currentDirection = 'clockwise'
-  private direction: number
-  private currentColor = ''
-  private resolving: boolean = false
+import {
+  createInitialDeck,
+  createEmptyDeck,
+  isWild,
+  isColored,
+  createDeckWithCards,
+  deal as deckDeal,
+  shuffle as deckShuffle,
+  putCardOnTop as deckPutTop,
+  getDeckUnderTop as deckUnderTop,
+  top as deckTop,
+  toArray as deckToArray,
+  size as deckSize,
+} from './deck'
 
-  private lastActor: number | null = null
-  private lastUnoSayer: number | null = null //most recen uno sayer (anyone)
-  private pendingUnoAccused: number | null = null //who just went to 1 card
-  private unoProtectedForWindow = false
-  private unoSayersSinceLastAction = new Set<number>()
+import {
+  createHand,
+  add as handAdd,
+  remove as handRemove,
+  toArray as handToArray,
+} from './player_hand'
 
-  private endCallbacks: Array<(e: { winner: number }) => void> = []
+function withHandView(
+  h: PlayerHand
+): PlayerHand & { size(): number; getPlayerHand(): List<Card> } {
+  const anyHand = h as PlayerHand & {
+    size?: () => number
+    getPlayerHand?: () => List<Card>
+  }
 
-  private ensureUnoState(): void {
-    if (this.pendingUnoAccused === undefined) this.pendingUnoAccused = null
-    if (this.unoProtectedForWindow === undefined) this.unoProtectedForWindow = false
-    if (this.lastUnoSayer === undefined) this.lastUnoSayer = null
-    if (this.lastActor === undefined) this.lastActor = null
-    if (this.unoSayersSinceLastAction === undefined) {
-      this.unoSayersSinceLastAction = new Set<number>()
+  Object.defineProperties(anyHand, {
+    size: {
+      value: () => anyHand.cards.size,
+      enumerable: false,
+      configurable: true,
+      writable: false,
+    },
+    getPlayerHand: {
+      value: () => anyHand.cards,
+      enumerable: false,
+      configurable: true,
+      writable: false,
+    },
+  })
+
+  return anyHand as PlayerHand & { size(): number; getPlayerHand(): List<Card> }
+}
+
+function withDeckView<C extends Card>(
+  d: Deck<C>
+): Deck<C> & { readonly length: number } {
+  const out = d as Deck<C> & { readonly length: number }
+  if (!('length' in out)) {
+    Object.defineProperty(out, 'length', {
+      get: () => deckSize(d),
+      enumerable: false,
+      configurable: true,
+    })
+  }
+  return out
+}
+
+function setDrawDeck(s: Round, d: Deck<Card>): Round {
+  return withState(s, { drawDeck: withDeckView(d) })
+}
+function setDiscardDeck(s: Round, d: Deck<Card>): Round {
+  return withState(s, { discardDeck: withDeckView(d) })
+}
+function setPlayerHand(s: Round, p: number, h: PlayerHand): Round {
+  return withState(s, {
+    playerHands: s.playerHands.update(p, () => withHandView(h)),
+  })
+}
+function updatePlayerHand(
+  s: Round,
+  p: number,
+  updater: (h: PlayerHand) => PlayerHand
+): Round {
+  return withState(s, {
+    playerHands: s.playerHands.update(p, (h) =>
+      withHandView(updater(h ?? createHand()))
+    ),
+  })
+}
+
+export function createRound(
+  players: ReadonlyArray<string>,
+  dealer: number,
+  shuffler: Shuffler<Card>,
+  cardsPerPlay: number
+): Round {
+  const initialState = makeRoundState(players, dealer, shuffler, cardsPerPlay)
+  return resolveStart(initialState)
+}
+
+function setTurn(s: Round, idx: number): Round {
+  return withState(s, { currentPlayerIndex: idx, playerInTurn: idx })
+}
+
+function makeRoundState(
+  players: ReadonlyArray<string>,
+  dealer: number,
+  shuffler: Shuffler<Card>,
+  cardsPerPlay: number
+): Round {
+  if (players.length < 2) throw new Error('A Round requires at least 2 players')
+  if (players.length > 10) throw new Error('A Round allows at most 10 players')
+
+  let drawDeck = withDeckView(deckShuffle(createInitialDeck(), shuffler))
+  let discardDeck = withDeckView(createEmptyDeck<Card>())
+  let playerHands = List<PlayerHand>(
+    Array.from({ length: players.length }, () => withHandView(createHand()))
+  )
+
+  for (let p = 0; p < players.length; p++) {
+    for (let j = 0; j < (cardsPerPlay ?? 7); j++) {
+      const [c, nd] = deckDeal(drawDeck)
+      if (!c) throw new Error('Not enough cards')
+      drawDeck = withDeckView(nd)
+      playerHands = playerHands.update(p, (h) => withHandView(handAdd(h!, c)))
     }
   }
 
-  isWild = (t: Card['type']) => t === 'WILD' || t === 'WILD_DRAW'
-  isWildTop = () =>
-    this.isWild(this.discardDeck.top()!.type) || this.isWild(this.drawDeck.top()!.type)
+  let top: Card | undefined
+  while (true) {
+    const [card, rest] = deckDeal(drawDeck)
+    if (!card) throw new Error('Not enough cards')
 
-  dealAll = () => {
-    this.playerHands = Array.from({ length: this.playerCount }, () => new PlayerHand())
-    const n = this.cardsPerPlay ?? 7
-    for (let p = 0; p < this.playerCount; p++) {
-      for (let j = 0; j < n; j++) {
-        const card = this.drawDeck.deal()
-        if (!card) throw new Error('Not enough cards')
-        this.playerHands[p].add(card)
+    if (isWild(card)) {
+      drawDeck = withDeckView(deckShuffle(deckPutTop(rest, card), shuffler))
+      continue
+    }
+
+    top = card
+    drawDeck = withDeckView(rest)
+    break
+  }
+
+  discardDeck = withDeckView(deckPutTop(discardDeck, top!))
+  const currentColor = isColored(top!) ? top!.color : ''
+
+  return {
+    players,
+    playerCount: players.length,
+    currentPlayerIndex: dealer,
+    discardDeck,
+    drawDeck,
+    playerHands,
+    dealer,
+    shuffler,
+    cardsPerPlay,
+    startResolved: false,
+    currentDirection: 'clockwise',
+    direction: 1,
+    currentColor,
+    resolving: false,
+    lastActor: null,
+    lastUnoSayer: null,
+    pendingUnoAccused: null,
+    unoProtectedForWindow: false,
+    unoSayersSinceLastAction: new Set<number>(),
+    playerInTurn: dealer,
+  }
+}
+
+function resolveStart(s: Round): Round {
+  if (s.startResolved) return s
+  const top = deckTop(s.discardDeck)!
+  const pc = s.playerCount
+  const dir = s.direction
+
+  const base = withState(s, {
+    startResolved: true,
+    currentColor: isColored(top) ? top.color : s.currentColor,
+  })
+
+  switch (top.type) {
+    case 'DRAW': {
+      const target = mod(base.dealer + dir, pc)
+      const [, s2] = drawTo(base, target, 2)
+      return setTurn(s2, mod(target + dir, pc))
+    }
+    case 'SKIP':
+      return setTurn(base, mod(base.dealer + 2 * dir, pc))
+
+    case 'REVERSE': {
+      const ndir = -dir as Direction
+      const base2 = withState(base, {
+        direction: ndir,
+        currentDirection: ndir === 1 ? 'clockwise' : 'counterclockwise',
+      })
+      const advance = pc === 2 ? 2 * ndir : ndir
+      return setTurn(base2, mod(base.dealer + advance, pc))
+    }
+
+    default:
+      return setTurn(base, mod(base.dealer + dir, pc))
+  }
+}
+
+function drawTo(s: Round, p: number, n = 1): [void, Round] {
+  let state = s
+
+  for (let i = 0; i < n; i++) {
+    let [card, nd] = deckDeal(state.drawDeck)
+
+    // If draw deck is empty, reshuffle discard (minus top) into draw
+    if (!card) {
+      const top = deckTop(state.discardDeck)
+      const underDeck = deckUnderTop(state.discardDeck)
+      const under = deckToArray(underDeck)
+
+      if (under.length === 0) throw new Error('No cards left to draw')
+
+      let reshuffled = createDeckWithCards(under)
+      if (state.shuffler) reshuffled = deckShuffle(reshuffled, state.shuffler)
+      ;[card, nd] = deckDeal(reshuffled)
+      if (!card) throw new Error('No cards left to draw')
+
+      state = setDiscardDeck(
+        state,
+        top ? deckPutTop(createEmptyDeck<Card>(), top) : createEmptyDeck<Card>()
+      )
+    }
+
+    state = setDrawDeck(state, nd)
+    state = updatePlayerHand(state, p, (h) => handAdd(h, card!))
+  }
+
+  return [undefined, state]
+}
+
+export function player(state: Round, ix: number): string {
+  if (ix < 0 || ix >= state.playerCount) {
+    throw new Error('The player index is out of bounds')
+  }
+  return state.players[ix]
+}
+
+export function getHand(state: Round, ix: number): readonly Card[] {
+  const hand = state.playerHands.get(ix)
+  if (!hand) throw new Error('Hand not found')
+  return handToArray(hand)
+}
+
+export function discardPile(state: Round): Deck<Card> {
+  return state.discardDeck
+}
+
+export function drawPile(state: Round): Deck<Card> {
+  return state.drawDeck
+}
+
+export function topOfDiscard(state: Round): Card | undefined {
+  return deckTop(discardPile(state))
+}
+
+export function canPlayAny(state: Round): boolean {
+  if (winner(state) !== undefined) return false
+  const p = state.playerInTurn
+  if (p === undefined) return false
+  return getHand(state, p).some((_, ix) => canPlay(ix, state))
+}
+
+export function canPlay(cardIx: number, state: Round): boolean {
+  if (winner(state) !== undefined) return false
+
+  const p = state.playerInTurn ?? state.currentPlayerIndex
+  const hand = state.playerHands.get(p)
+  const size = hand ? hand.size() : 0
+  if (cardIx < 0 || cardIx >= size) return false
+
+  const top = deckTop(state.discardDeck)
+  const played = getHand(state, p)[cardIx]
+
+  const effectiveColor: Color | undefined =
+    state.currentColor || (top && isColored(top) ? top.color : undefined)
+
+  if (isColored(played)) {
+    switch (top!.type) {
+      case 'NUMBERED':
+        if (played.type === 'NUMBERED') {
+          return (
+            played.color === effectiveColor ||
+            played.number === (isColored(top!) ? top.number : -1)
+          )
+        }
+        return played.color === effectiveColor
+      case 'SKIP':
+        return played.color === effectiveColor || played.type === 'SKIP'
+      case 'DRAW':
+        return played.color === effectiveColor || played.type === 'DRAW'
+      case 'REVERSE':
+        return played.color === effectiveColor || played.type === 'REVERSE'
+      case 'WILD':
+      case 'WILD DRAW':
+        return played.color === effectiveColor
+    }
+  } else {
+    if (played.type === 'WILD') return true
+
+    if (played.type === 'WILD DRAW') {
+      // must NOT have a card of the effective color
+      if (!effectiveColor) {
+        // no known color, be strict: only allow if hand has zero colored cards
+        const hasAnyColored = handToArray(state.playerHands.get(p)!).some(
+          isColored
+        )
+        return !hasAnyColored
       }
+      const hasColor = handToArray(state.playerHands.get(p)!).some(
+        (c) => isColored(c) && c.color === effectiveColor
+      )
+      return !hasColor
     }
   }
+  return false
+}
 
-  constructor(players: string[], dealer: number, shuffler: Shuffler<Card>, cardsPerPlay: number) {
-    if (players.length < 2) throw new Error('A Round requires at least 2 players')
-    if (players.length > 10) throw new Error('A Round allows at most 10 players')
+export function play(
+  cardIx: number,
+  askedColor: Color | undefined,
+  state: Round
+): Round {
+  let s = ensureUnoState(state)
+  if (winner(s) !== undefined)
+    throw new Error('Cannot play after having a winner')
 
-    this.players = players
-    this.playerCount = players.length
-    this.direction = this.currentDirection == 'clockwise' ? 1 : -1
-    this.dealer = dealer
-    this.currentPlayerIndex = dealer
-    this.cardsPerPlay = cardsPerPlay
-    this.discardDeck = new Deck([])
-    this.playerHands = []
-    this.shuffler = shuffler
+  const p = s.playerInTurn
+  if (p === undefined) throw new Error("It's not any player's turn")
 
-    this.drawDeck = createInitialDeck()
-    this.drawDeck.shuffle(this.shuffler)
-    this.dealAll()
+  const handArr = getHand(s, p)
+  const handSizeNow = handArr.length
 
-    while (true) {
-      const top = this.drawDeck.deal()
-      if (!top) throw new Error('Not enough cards')
-      this.discardDeck = new Deck([top])
-
-      //discardDeck.top is literally top that was just dealt
-      if (this.isWild(top.type)) {
-        this.drawDeck = new Deck([top, ...this.drawDeck.getDeck()])
-        this.drawDeck.shuffle(this.shuffler)
-        continue
-      }
-      break
-    }
-
-    const startTop = this.discardDeck.top()!
-    if (isColored(startTop)) {
-      this.currentColor = startTop.color
-    }
-
-    this.playerInTurn()
+  if (handSizeNow === 0 || cardIx < 0 || cardIx >= handSizeNow) {
+    throw new Error('Illegal play index')
   }
 
-  player(ix: number): string {
-    if (ix < 0 || ix >= this.playerCount) {
-      throw new Error('The player index is out of bounds')
-    }
-    return this.players[ix]
+  if (s.pendingUnoAccused !== null && p !== s.pendingUnoAccused) {
+    s = withState(s, { pendingUnoAccused: null, unoProtectedForWindow: false })
   }
-  playerHand(num: number): Card[] {
-    return this.playerHands[num].getPlayerHand()
-  }
-  discardPile(): Deck {
-    return this.discardDeck
-  }
-  drawPile(): Deck {
-    return this.drawDeck
-  }
-  playerInTurn(): number | undefined {
-    if (!this.startResolved) {
-      const top = this.discardDeck.top()!
-      if (isColored(top)) {
-        this.currentColor = top.color
-      }
-      if (top?.type === 'DRAW') {
-        this.currentPlayerIndex = mod(this.dealer + this.direction, this.playerCount)
-        this.drawTo(this.currentPlayerIndex, 2)
-        this.currentPlayerIndex = mod(this.currentPlayerIndex + this.direction, this.playerCount)
-      } else if (top?.type === 'SKIP') {
-        this.currentPlayerIndex = mod(this.dealer + this.direction * 2, this.playerCount)
-      } else if (top?.type === 'REVERSE') {
-        this.direction = -1
-        this.currentPlayerIndex = mod(this.dealer + this.direction, this.playerCount)
-      } else {
-        this.currentPlayerIndex = mod(this.dealer + this.direction, this.playerCount)
-      }
 
-      this.startResolved = true
-      return this.currentPlayerIndex
-    }
-    if (this.winner() !== undefined) {
-      return undefined
-    }
-    return this.currentPlayerIndex
+  if (s.lastUnoSayer !== null && s.lastUnoSayer !== p) {
+    s = withState(s, { lastUnoSayer: null })
   }
-  canPlayAny(): boolean {
-    if (this.winner() !== undefined) {
-      return false
-    }
-    return (
-      this.playerHand(this.currentPlayerIndex).filter((card, index) => this.canPlay(index)).length >
-      0
+
+  const playedCard = handArr[cardIx]
+  const wild = isWild(playedCard)
+
+  if (askedColor && !wild) {
+    throw new Error('Illegal play: Cannot ask for color on a colored card')
+  }
+  if (!askedColor && wild) {
+    throw new Error(
+      'Illegal play: Must choose a color when playing a wild card'
     )
   }
 
-  canPlay(cardIx: number): boolean {
-    if (this.winner() !== undefined) {
-      return false
+  if (!canPlay(cardIx, s)) {
+    const top = deckTop(s.discardDeck)
+    throw new Error(
+      `Illegal play:\n${JSON.stringify(playedCard)}\n${JSON.stringify(top)}`
+    )
+  }
+
+  if (handSizeNow === 2) {
+    s = withState(s, {
+      pendingUnoAccused: p,
+      unoProtectedForWindow: s.unoSayersSinceLastAction.has(p),
+      lastUnoSayer: null,
+    })
+  }
+
+  // remove from hand
+  s = updatePlayerHand(s, p, (h) => handRemove(h, playedCard))
+  s = withState(s, { resolving: true })
+
+  // push to discard and set color
+  s = setDiscardDeck(s, deckPutTop(s.discardDeck, playedCard))
+  s = withState(s, {
+    currentColor: isColored(playedCard) ? playedCard.color : (askedColor ?? ''),
+  })
+
+  // Apply effects and advance
+  const pc = s.playerCount
+  const dir = s.direction
+  const topNow = deckTop(s.discardDeck)!
+
+  switch (topNow.type) {
+    case 'NUMBERED':
+    case 'WILD': {
+      s = setTurn(s, mod(p + dir, pc))
+      break
     }
-    const hand = this.playerHands[this.currentPlayerIndex]
-    const size = hand.size()
-    if (cardIx < 0 || cardIx >= size) return false
+    case 'DRAW': {
+      const target = mod(p + dir, pc)
+      const [, s2] = drawTo(s, target, 2)
+      s = setTurn(s2, mod(target + dir, pc))
+      break
+    }
+    case 'SKIP': {
+      s = setTurn(s, mod(p + 2 * dir, pc))
+      break
+    }
+    case 'REVERSE': {
+      const ndir = -dir as Direction
+      s = withState(s, {
+        direction: ndir,
+        currentDirection: ndir === 1 ? 'clockwise' : 'counterclockwise',
+      })
+      if (pc === 2) {
+        s = setTurn(s, mod(p + 2 * ndir, pc))
+      } else {
+        s = setTurn(s, mod(p + ndir, pc))
+      }
+      break
+    }
+    case 'WILD DRAW': {
+      const target = mod(p + dir, pc)
+      const [, s2] = drawTo(s, target, 4)
+      s = setTurn(s2, mod(target + dir, pc))
+      break
+    }
+  }
 
-    const top = this.discardDeck.top()!
-    const played = this.playerHand(this.currentPlayerIndex)[cardIx]
-    const effectiveColor = this.currentColor
+  s = withState(s, {
+    lastActor: p,
+    resolving: false,
+    unoSayersSinceLastAction: new Set<number>(),
+  })
 
-    if (isColored(played)) {
-      switch (top.type) {
+  const w = winner(s)
+  if (w !== undefined) {
+    s = withState(s, {
+      playerInTurn: undefined,
+      currentPlayerIndex: -1 as unknown as number,
+      resolving: false,
+      unoSayersSinceLastAction: new Set<number>(),
+      scored: false,
+    })
+  }
+  return s
+}
+
+export function draw(state: Round): Round {
+  let s = ensureUnoState(state)
+
+  if (s.pendingUnoAccused !== null && s.playerInTurn !== s.pendingUnoAccused) {
+    s = withState(s, { pendingUnoAccused: null, unoProtectedForWindow: false })
+  }
+  if (s.lastUnoSayer !== null && s.lastUnoSayer !== s.playerInTurn) {
+    s = withState(s, { lastUnoSayer: null })
+  }
+
+  if (winner(s) !== undefined || s.playerInTurn === undefined)
+    throw new Error('Cannot draw after having a winner')
+
+  const p = s.playerInTurn
+
+  let card: Card | undefined
+  let rest: Deck<Card>
+  ;[card, rest] = deckDeal(s.drawDeck)
+
+  if (!card) {
+    const top = deckTop(s.discardDeck)
+    const underTop = deckUnderTop(s.discardDeck)
+    if (deckSize(underTop) === 0) throw new Error('No cards left to draw')
+
+    const reshuffled = s.shuffler ? deckShuffle(underTop, s.shuffler) : underTop
+    ;[card, rest] = deckDeal(reshuffled)
+
+    s = setDiscardDeck(
+      s,
+      top ? deckPutTop(createEmptyDeck<Card>(), top) : createEmptyDeck<Card>()
+    )
+
+    if (!card) throw new Error('No cards left to draw')
+  }
+
+  s = setDrawDeck(s, rest)
+  s = updatePlayerHand(s, p, (h) => handAdd(h, card!))
+  s = withState(s, { resolving: true, lastActor: p })
+
+  if (deckSize(s.drawDeck) === 0) {
+    const top = deckTop(s.discardDeck)
+    const underTop = deckUnderTop(s.discardDeck)
+    if (deckSize(underTop) > 0) {
+      const reshuffled = s.shuffler
+        ? deckShuffle(underTop, s.shuffler)
+        : underTop
+      s = setDiscardDeck(
+        s,
+        top ? deckPutTop(createEmptyDeck<Card>(), top) : createEmptyDeck<Card>()
+      )
+      s = setDrawDeck(s, reshuffled)
+    }
+  }
+
+  const justDrawnIx = s.playerHands.get(p)!.size() - 1
+  if (!canPlay(justDrawnIx, s)) {
+    s = setTurn(s, mod(p + s.direction, s.playerCount))
+  }
+
+  s = withState(s, {
+    resolving: false,
+    unoSayersSinceLastAction: new Set<number>(),
+  })
+
+  return s
+}
+
+function ensureUnoState(state: Round): Round {
+  return withState(state, {
+    pendingUnoAccused: state.pendingUnoAccused ?? null,
+    unoProtectedForWindow: state.unoProtectedForWindow ?? false,
+    lastUnoSayer: state.lastUnoSayer ?? null,
+    lastActor: state.lastActor ?? null,
+    unoSayersSinceLastAction:
+      state.unoSayersSinceLastAction ?? new Set<number>(),
+  })
+}
+
+export function winner(state: Round): number | undefined {
+  for (let i = 0; i < state.playerHands.size; i++) {
+    const hand = withHandView(state.playerHands.get(i)!)
+    if (hand.size() === 0) return i
+  }
+  return undefined
+}
+
+export function hasEnded(state: Round): boolean {
+  return state.playerHands.some((h) => withHandView(h).size() === 0)
+}
+
+export function score(state: Round): number | undefined {
+  const w = winner(state)
+  if (w === undefined) return undefined
+
+  let total = 0
+  for (let i = 0; i < state.playerHands.size; i++) {
+    if (i === w) continue
+    const hand = state.playerHands.get(i)!
+    total += handToArray(hand).reduce((acc: number, curr: Card) => {
+      switch (curr.type) {
         case 'NUMBERED':
-          if (played.type === 'NUMBERED') {
-            return (
-              played.color === effectiveColor ||
-              played.number === (isColored(top) ? top.number : -1)
-            )
-          }
-          return played.color === effectiveColor
-
+          return acc + curr.number
         case 'SKIP':
-          return played.color === effectiveColor || played.type === 'SKIP'
-
-        case 'DRAW':
-          return played.color === effectiveColor || played.type === 'DRAW'
-
         case 'REVERSE':
-          return played.color === effectiveColor || played.type === 'REVERSE'
-
+        case 'DRAW':
+          return acc + 20
         case 'WILD':
-        case 'WILD_DRAW':
-          return played.color === effectiveColor
+        case 'WILD DRAW':
+          return acc + 50
       }
-    } else {
-      if (played.type === 'WILD') {
-        return true
-      }
-      if (played.type === 'WILD_DRAW') {
-        if (effectiveColor) {
-          return !hand.hasColor(effectiveColor)
-        }
-        return true
-      }
-    }
+    }, 0)
+  }
+  return total
+}
+
+export function sayUno(playerIx: number, state: Round): Round {
+  let s = ensureUnoState(state)
+
+  if (winner(s) !== undefined) {
+    throw new Error('Cannot say UNO after having a winner')
+  }
+  if (playerIx < 0 || playerIx >= s.playerCount) {
+    throw new Error('Player index out of bounds')
+  }
+
+  s = withState(s, {
+    lastUnoSayer: playerIx,
+    unoSayersSinceLastAction: new Set<number>([
+      ...s.unoSayersSinceLastAction,
+      playerIx,
+    ]),
+  })
+  if (s.pendingUnoAccused === playerIx) {
+    s = withState(s, { unoProtectedForWindow: true })
+  }
+  return s
+}
+
+export function catchUnoFailure(
+  { accuser, accused }: { accuser: number; accused: number },
+  state: Round
+): Round {
+  if (!checkUnoFailure({ accuser, accused }, state)) {
+    return state
+  }
+
+  const [, afterDraw] = drawTo(state, accused, 4)
+
+  return withState(afterDraw, {
+    pendingUnoAccused: null,
+    unoProtectedForWindow: false,
+  })
+}
+
+export function checkUnoFailure(
+  { accuser, accused }: { accuser: number; accused: number },
+  state: Round
+): boolean {
+  if (accused < 0) throw new Error('Accused cannot be negative')
+  if (accused >= state.playerCount)
+    throw new Error('Accused cannot be beyond the player count')
+
+  if (state.pendingUnoAccused !== accused || state.pendingUnoAccused === null)
     return false
-  }
-  play(cardIx: number, askedColor?: Color): Card {
-    this.ensureUnoState()
+  if (state.unoProtectedForWindow) return false
+  if (state.playerHands.get(accused)!.size() !== 1) return false
 
-    // close old accusation window if diff player starts doing stuff
-    if (this.pendingUnoAccused !== null && this.currentPlayerIndex !== this.pendingUnoAccused) {
-      this.pendingUnoAccused = null
-      this.unoProtectedForWindow = false
-    }
-
-    //other uno wont carry
-    if (this.lastUnoSayer !== null && this.lastUnoSayer !== this.currentPlayerIndex) {
-      this.lastUnoSayer = null
-    }
-
-    if (this.winner() !== undefined) {
-      throw 'Cannot play after having a winner'
-    }
-    this.resolving = true
-    const p = this.currentPlayerIndex
-    const hand = this.playerHand(p)
-
-    if (hand.length === 0) {
-      throw new Error('Illegal play index')
-    }
-    if (cardIx < 0 || cardIx >= hand.length) {
-      cardIx = hand.length - 1
-    }
-
-    const playedCard: Card = hand[cardIx]
-    const isWildCard: boolean = playedCard.type == 'WILD' || playedCard.type == 'WILD_DRAW'
-
-    if (askedColor && !isWildCard) {
-      throw new Error('Illegal play: Cannot ask for color on a colored card')
-    }
-    if (!askedColor && isWildCard) {
-      throw new Error('Illegal play: Cannot not ask for color on a wild card')
-    }
-    try {
-      const canPlay: boolean = this.canPlay(cardIx)
-      if (!canPlay) {
-        throw new Error('Illegal play: ' + `\n${playedCard}\n${this.discardDeck.top()}`)
-      }
-
-      // open for accusation when player goes from 2 to 1 card
-      if (hand.length === 2) {
-        this.pendingUnoAccused = p
-        //protect if he said uno already
-        this.unoProtectedForWindow = this.unoSayersSinceLastAction.has(p)
-        // dont let this uno saying leak into later turns
-        this.lastUnoSayer = null
-      }
-
-      this.playerHands[p].playCard(cardIx)
-      this.discardDeck = new Deck([playedCard, ...this.discardDeck.getDeck()])
-      if (isColored(playedCard)) {
-        this.currentColor = playedCard.color
-      } else {
-        this.currentColor = askedColor ?? ''
-      }
-      switch (this.discardDeck.top()?.type) {
-        case 'NUMBERED':
-          this.currentPlayerIndex = mod(this.currentPlayerIndex + this.direction, this.playerCount)
-          break
-        case 'DRAW':
-          const drawTarget = mod(this.currentPlayerIndex + this.direction, this.playerCount)
-          this.drawTo(drawTarget, 2)
-          this.currentPlayerIndex = mod(drawTarget + this.direction, this.playerCount)
-          break
-        case 'SKIP':
-          this.currentPlayerIndex = mod(
-            this.currentPlayerIndex + this.direction * 2,
-            this.playerCount,
-          )
-          break
-        case 'REVERSE':
-          this.direction = -this.direction
-          this.currentPlayerIndex = mod(this.currentPlayerIndex + this.direction, this.playerCount)
-          break
-        case 'WILD':
-          this.currentPlayerIndex = mod(this.currentPlayerIndex + this.direction, this.playerCount)
-          break
-        case 'WILD_DRAW':
-          const wildTarget = mod(this.currentPlayerIndex + this.direction, this.playerCount)
-          this.drawTo(wildTarget, 4)
-          this.currentPlayerIndex = mod(wildTarget + this.direction, this.playerCount)
-          break
-      }
-      this.lastActor = p
-      const w = this.winner()
-      if (w !== undefined) {
-        for (const cb of this.endCallbacks) cb({ winner: w })
-      }
-
-      return playedCard
-    } catch (e: unknown) {
-      if (e instanceof Error) {
-        throw new Error(e.message)
-      } else {
-        throw e
-      }
-    } finally {
-      this.resolving = false
-      this.unoSayersSinceLastAction.clear()
-    }
-  }
-
-  private drawTo(p: number, n = 1): void {
-    if (this.winner() !== undefined && !this.resolving) {
-      throw new Error('Cannot draw after having a winner')
-    }
-    for (let i = 0; i < n; i++) {
-      let c = this.drawDeck.deal()
-      if (!c) {
-        const top = this.discardDeck.top()
-        const underTop = this.discardDeck.getDeckUnderTop()
-        if (!underTop || underTop.length === 0) throw new Error('No cards left to draw')
-        this.discardDeck = new Deck(top ? [top] : [])
-        this.drawDeck = new Deck(underTop)
-        this.drawDeck.shuffle(this.shuffler!)
-        c = this.drawDeck.deal()
-        if (!c) throw new Error('No cards left to draw')
-      }
-      this.playerHands[p].add(c)
-    }
-  }
-  draw(): void {
-    this.ensureUnoState()
-    if (this.pendingUnoAccused !== null && this.currentPlayerIndex !== this.pendingUnoAccused) {
-      this.pendingUnoAccused = null
-      this.unoProtectedForWindow = false
-    }
-    if (this.lastUnoSayer !== null && this.lastUnoSayer !== this.currentPlayerIndex) {
-      this.lastUnoSayer = null
-    }
-
-    if (this.winner() !== undefined) {
-      throw 'Cannot draw after having a winner'
-    }
-
-    const p = this.currentPlayerIndex
-    const drawn = this.drawDeck.deal()
-    if (!drawn) throw new Error('No cards left to draw')
-
-    this.playerHands[p].add(drawn)
-    this.lastActor = p
-
-    if (!this.canPlay(this.playerHands[p].size() - 1)) {
-      this.currentPlayerIndex = mod(this.currentPlayerIndex + this.direction, this.playerCount)
-    }
-
-    this.unoSayersSinceLastAction.clear()
-  }
-
-  catchUnoFailure({ accuser, accused }: { accuser: number; accused: number }): boolean {
-    if (accused < 0) {
-      throw new Error('Accused cannot be negative')
-    }
-    if (accused >= this.playerCount) {
-      throw new Error('Accused cannot be beyond the player count')
-    }
-
-    // must be accusing the player who just went to 1 card and while the window is open
-    if (this.pendingUnoAccused === null || accused !== this.pendingUnoAccused) return false
-
-    // if protected by timing of UNO saying accusation fails
-    if (this.unoProtectedForWindow) return false
-
-    // accused must have one card to be able to be accused
-    if (this.playerHands[accused].size() !== 1) return false
-
-    // accusation valid = draw 4
-    this.drawTo(accused, 4)
-    this.pendingUnoAccused = null
-    this.unoProtectedForWindow = false
-    return true
-  }
-
-  hasEnded(): boolean {
-    return this.playerHands.some((hand) => hand.size() == 0)
-  }
-
-  winner(): number | undefined {
-    for (let i = 0; i < this.playerHands.length; i++) {
-      const hand: PlayerHand = this.playerHands[i]
-      if (hand.size() == 0) {
-        return i
-      }
-    }
-    return undefined
-  }
-  score(): number | undefined {
-    const w = this.winner()
-    if (w === undefined) {
-      return undefined
-    }
-    let sum = 0
-    for (let i = 0; i < this.playerHands.length; i++) {
-      if (i === w) continue
-      const hand: PlayerHand = this.playerHands[i]
-      for (const card of hand.getPlayerHand()) {
-        switch (card.type) {
-          case 'NUMBERED':
-            sum += card.number
-            break
-          case 'SKIP':
-            sum += 20
-            break
-          case 'REVERSE':
-            sum += 20
-            break
-          case 'DRAW':
-            sum += 20
-            break
-          case 'WILD':
-            sum += 50
-            break
-          case 'WILD_DRAW':
-            sum += 50
-            break
-        }
-      }
-    }
-    return sum
-  }
-  sayUno(player: number): void {
-    this.ensureUnoState()
-    if (player < 0 || player >= this.playerCount) throw new Error('Invalid player index')
-    if (this.winner() !== undefined) throw new Error('Cannot say UNO after the game ended')
-
-    // remember who just said UNO and if its the same player that just went to 1 card
-    // (window open) this protects them against accusation for this window
-    this.lastUnoSayer = player
-    this.unoSayersSinceLastAction.add(player)
-
-    if (this.pendingUnoAccused === player) {
-      this.unoProtectedForWindow = true
-    }
-  }
-
-  onEnd(cb: (e: { winner: number }) => void): void {
-    this.endCallbacks.push(cb)
-  }
-
-  toMemento(): any {
-    return {
-      players: this.players,
-      hands: this.playerHands.map((h) => h.getPlayerHand()),
-      drawPile: this.drawDeck.getDeck(),
-      discardPile: this.discardDeck.getDeck(),
-      currentColor: this.currentColor,
-      currentDirection: this.currentDirection,
-      dealer: this.dealer,
-      playerInTurn: this.playerInTurn(),
-    }
-  }
-
-  get discardTop(): Card | undefined { return this.discardDeck.top() }
-  get drawPileSize(): number { return this.drawDeck.size }
+  return true
 }

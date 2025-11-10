@@ -1,4 +1,4 @@
-import { Card, Color, Type } from '../../src/model/deck'
+import { Card, Color, Type } from '../../src/types/deck.types'
 
 export type CardPredicate = (_: Card | undefined) => boolean
 
@@ -28,14 +28,16 @@ export function is(spec: CardSpec): CardPredicate {
       case 'REVERSE':
       case 'DRAW':
         return (
-          conforms(spec.type, c.type) && conforms(spec.color, c.color) && spec.number === undefined
+          conforms(spec.type, c.type) &&
+          conforms(spec.color, c.color) &&
+          spec.number === undefined
         )
       default:
-        return conforms(spec.type, c.type) && spec.color === undefined && spec.number === undefined
+        return (
+          conforms(spec.type, c.type) &&
+          spec.color === undefined &&
+          spec.number === undefined
+        )
     }
   }
-}
-
-export function not(pred: CardPredicate): CardPredicate {
-  return (c) => !pred(c)
 }

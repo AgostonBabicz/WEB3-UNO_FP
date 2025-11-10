@@ -1,13 +1,10 @@
 {
   "compilerOptions": {
     "strict": true,
+    "outDir": "./dist/",
+    "sourceMap": true,
     "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "Node",
-    "baseUrl": ".",
-    "rootDir": ".",
-    "noEmit": true,
-    "types": ["jest"]
-  },
-  "include": ["src", "__test__"]
+    "lib":["ES2022", "DOM"],
+    "moduleResolution": "Node"
+  }
 }
