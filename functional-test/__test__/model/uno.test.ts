@@ -146,7 +146,7 @@ describe('ending the second round', () => {
     expect(game2.winner).toBeUndefined()
   })
   test('the score is updated', () => {
-    expect(game2.scores).toEqual([0, 78, 73, 0])
+    expect(game2.scores).toEqual([0, 151, 0, 0])
   })
   test('a new round is started', () => {
     expect(Round.hasEnded(game2.currentRound!)).toBeFalsy
@@ -187,13 +187,44 @@ describe('ending the third round', () => {
   )
   const game3 = play(_.partial(Round.play, 0, undefined), game2)
 
-  test('player 0 won', () => {
-    expect(game3.winner).toEqual(2)
+  test('the game still has no winner', () => {
+    expect(game3.winner).toBeUndefined()
   })
   test('the score is updated', () => {
-    expect(game3.scores).toEqual([0, 78, 216, 0])
+    expect(game3.scores).toEqual([143, 151, 0, 0])
   })
-  test('a new round is not started', () => {
-    expect(game3.currentRound).toBeUndefined()
+  test('a new round started', () => {
+    expect(Round.hasEnded(game3.currentRound!)).toBeFalsy
+  })
+})
+
+describe('ending the fourth round', () => {
+  const props = {
+    players: ['a', 'b', 'c', 'd'],
+    targetScore: 200,
+    randomizer: () => 3,
+    shuffler: successiveShufflers(firstShuffle, secondShuffle, thirdShuffle),
+    cardsPerPlayer: 1,
+  }
+  const startGame = createGame(props)
+  const game1 = play(
+    _.flow([Round.draw, _.partial(Round.play, 0, undefined)]),
+    startGame
+  )
+  const game2 = play(
+    _.flow([Round.draw, _.partial(Round.play, 0, undefined)]),
+    game1
+  )
+  const game3 = play(_.partial(Round.play, 0, undefined), game2)
+
+  const game4 = play(_.partial(Round.play, 0, undefined), game3)
+  test('player 0 won', () => {
+    expect(game4.winner).toEqual(0)
+  })
+  test('the score is updated', () => {
+    expect(game4.scores).toEqual([286, 151, 0, 0])
+  })
+  test('target score reached. game ended', () => {
+    expect(game4.currentRound).toBeUndefined()
   })
 })

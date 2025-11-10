@@ -54,7 +54,6 @@ export function player(ix: number, g: Game): string {
   return g.players[ix]
 }
 
-// uno.ts
 export function resolveRoundEnd(g: Game): Game {
   const r = g.currentRound
   if (!r) return g
