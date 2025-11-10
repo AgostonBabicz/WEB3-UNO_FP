@@ -26,7 +26,7 @@ import {
   add as handAdd,
   remove as handRemove,
   toArray as handToArray,
-} from './plhand'
+} from './player_hand'
 
 function withHandView(
   h: PlayerHand
