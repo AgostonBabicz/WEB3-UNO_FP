@@ -213,14 +213,14 @@ describe('Playing a card', () => {
     })
   })
 
-  describe('Playing a wild draw card', () => {
+  describe('Playing a WILD_DRAW card', () => {
     let builder = shuffleBuilder()
     beforeEach(() => {
       builder = shuffleBuilder()
         .discard()
         .is({ type: 'NUMBERED', color: 'BLUE', number: 6 })
         .hand(0)
-        .is({ type: 'WILD DRAW' })
+        .is({ type: 'WILD_DRAW' })
         .repeat(6)
         .isnt({ color: 'BLUE' })
     })
@@ -302,12 +302,12 @@ describe('Playing a card', () => {
       })
       expect(() => play(0, undefined, round)).toThrow()
     })
-    it('is illegal _not_ to name a color on a wild draw card', () => {
+    it('is illegal _not_ to name a color on a WILD_DRAW card', () => {
       const shuffler = shuffleBuilder()
         .discard()
         .is({ type: 'NUMBERED', color: 'BLUE' })
         .hand(0)
-        .is({ type: 'WILD DRAW' })
+        .is({ type: 'WILD_DRAW' })
         .repeat(6)
         .isnt({ color: 'BLUE' })
         .build()

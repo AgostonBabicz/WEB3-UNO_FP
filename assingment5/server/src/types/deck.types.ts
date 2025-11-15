@@ -6,7 +6,7 @@ export type Type =
   | 'REVERSE'
   | 'DRAW'
   | 'WILD'
-  | 'WILD DRAW'
+  | 'WILD_DRAW'
 
 export type Deck<C extends Card = Card> = Readonly<List<C>> & {
   readonly length: number
@@ -29,12 +29,12 @@ export type DrawCard = Readonly<{ type: 'DRAW'; color: Color }>
 
 export type SpecialCard = SkipCard | ReverseCard | DrawCard
 
-export type WildCard = Readonly<{ type: 'WILD' | 'WILD DRAW' }>
+export type WildCard = Readonly<{ type: 'WILD' | 'WILD_DRAW' }>
 export type ColoredCard = Readonly<NumberCard | SpecialCard>
 
 export type NumKey = Extract<Type, 'NUMBERED'>
 export type SpecialKey = Extract<Type, 'SKIP' | 'REVERSE' | 'DRAW'>
-export type WildKey = Extract<Type, 'WILD' | 'WILD DRAW'>
+export type WildKey = Extract<Type, 'WILD' | 'WILD_DRAW'>
 export type CardMap = Record<NumKey, NumberCard> &
   Record<SpecialKey, SpecialCard> &
   Record<WildKey, WildCard>

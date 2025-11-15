@@ -466,8 +466,8 @@ describe('score', () => {
     )
     expect(score(round)).toEqual(50)
   })
-  it('has the value 50 if the opponent holds a wild draw card', () => {
-    builder.hand(1).is({ type: 'WILD DRAW' })
+  it('has the value 50 if the opponent holds a WILD_DRAW card', () => {
+    builder.hand(1).is({ type: 'WILD_DRAW' })
     const shuffler = builder.build()
     const round = play(
       0,
@@ -483,7 +483,7 @@ describe('score', () => {
   })
   it('adds the cards if the opponent have more than one card', () => {
     builder.hand(0).is({ color: 'BLUE', type: 'DRAW' })
-    builder.hand(1).is({ type: 'WILD DRAW' })
+    builder.hand(1).is({ type: 'WILD_DRAW' })
     builder.drawPile().is({ number: 5 }, { type: 'REVERSE' })
     const shuffler = builder.build()
     const round = play(
@@ -506,7 +506,7 @@ describe('score', () => {
       .hand(0)
       .is({ color: 'BLUE', type: 'DRAW' })
       .hand(1)
-      .is({ type: 'WILD DRAW' })
+      .is({ type: 'WILD_DRAW' })
       .hand(2)
       .is({ number: 7 })
       .hand(3)

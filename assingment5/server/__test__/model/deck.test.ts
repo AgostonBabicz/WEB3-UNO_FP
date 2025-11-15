@@ -86,8 +86,8 @@ describe('Initial deck', () => {
   it('contains 4 wild cards', () => {
     expect(initialDeck.filter(_.matches({ type: 'WILD' })).size).toEqual(4)
   })
-  it('contains 4 wild draw cards', () => {
-    expect(initialDeck.filter(_.matches({ type: 'WILD DRAW' })).size).toEqual(4)
+  it('contains 4 WILD_DRAW cards', () => {
+    expect(initialDeck.filter(_.matches({ type: 'WILD_DRAW' })).size).toEqual(4)
   })
   // Blank cards skipped, since they have no gameplay
   it('contains 108 cards', () => {

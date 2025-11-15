@@ -1,9 +1,8 @@
-// server/src/helpers/game/persistanceFunctions.ts
-
+import { Card } from "src/types/deck.types"
+import type { Game } from "src/types/uno.types"
 import { GameRepository } from "../../repository/gameRepository"
 import { RoundRepository } from "../../repository/roundRepository"
-import type { Game } from "@uno/shared/model/uno"
-import type { Card } from "@uno/shared/model/deck"
+import { getHand as roundGetHand } from "src/models/round"
 
 // Minimal DTOs so we never import the old GameRuntime again
 export type PersistScoreRow = {
@@ -39,11 +38,11 @@ export async function persistGameCreate(
   hostUserId: string | null
 ): Promise<void> {
   const grepo = new GameRepository()
-  const snap = game.toMemento()
+
   await grepo.create({
     id: gameId,
-    targetScore: snap.targetScore,
-    cardsPerPlayer: snap.cardsPerPlayer,
+    targetScore: game.targetScore,
+    cardsPerPlayer: game.cardsPerPlayer,
   }).catch(console.error)
 
   if (hostUserId) {
@@ -54,6 +53,7 @@ export async function persistGameCreate(
     }).catch(console.error)
   }
 }
+
 
 // Persist that a user joined seatIndex
 export async function persistPlayerJoin(
@@ -93,11 +93,17 @@ export async function persistRoundFinish(
   roundRowId?: string,
   userIds: Array<string | null> = []
 ): Promise<void> {
-  const snap = game.toMemento()
-  const hands = snap.currentRound?.hands ?? []
+  const round = game.currentRound
+  if (!round) return
+
+  const hands: Card[][] = Array.from(
+    { length: game.playerCount },
+    (_ , i) => roundGetHand(round, i) as Card[]
+  )
+
   const rp = computePointsFromHands(hands, winnerIx)
 
-  const scores: PersistScoreRow[] = snap.players.map((name, i) => ({
+  const scores: PersistScoreRow[] = game.players.map((name, i) => ({
     userId: userIds[i] ?? null,
     name,
     roundPoints: rp.perPlayer[i] ?? 0,
