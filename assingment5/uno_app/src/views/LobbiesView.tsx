@@ -1,41 +1,67 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import '../style/GameHome.css'
-
-type Lobby = {
-  id: string
-  players: number
-  targetScore?: number
-}
+import { useAppDispatch, useAppSelector } from '../store/hooks'
+import { selectUsername, selectIsAuthed } from '../store/authSlice'
+import {
+  loadWaitingGames,
+  joinLobby,
+  subscribeAll,
+  refreshMyHand,
+  selectWaitingGames,
+} from '../store/serverGameSlice'
 
 const LobbiesView: React.FC = () => {
+  const dispatch = useAppDispatch()
+  const navigate = useNavigate()
+
+  const lobbies = useAppSelector(selectWaitingGames)
+  const isAuthed = useAppSelector(selectIsAuthed)
+  const username = useAppSelector(selectUsername)
+
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [lobbies, setLobbies] = useState<Lobby[]>([])
 
   const refresh = async () => {
     setLoading(true)
     setError(null)
     try {
-      setTimeout(() => {
-        setLobbies([
-          { id: 'ABC123', players: 2, targetScore: 500 },
-          { id: 'XYZ999', players: 3, targetScore: 300 },
-        ])
-        setLoading(false)
-      }, 500)
+      await dispatch(loadWaitingGames()).unwrap()
     } catch (e: any) {
       setError(e?.message ?? 'Failed to load lobbies')
+    } finally {
       setLoading(false)
     }
   }
 
-  const join = (gameId: string) => {
-    console.log('Join lobby', gameId)
+  const joinLobbyHandler = async (gameId: string) => {
+    if (!isAuthed || !username) {
+      setError('Please log in first')
+      return
+    }
+    try {
+      const result = await dispatch(
+        joinLobby({ id: gameId, myName: username })
+      ).unwrap()
+
+      const id: string = result.gameId
+      await dispatch(subscribeAll())
+      await dispatch(refreshMyHand())
+
+      navigate(`/game-server?gameId=${encodeURIComponent(id)}`)
+    } catch (e: any) {
+      setError(e?.message ?? 'Join failed')
+    }
   }
 
   const goBack = () => {
-    console.log('Back to home')
+    navigate('/home')
   }
+
+  useEffect(() => {
+    refresh()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <main className="home uno-theme">
@@ -70,7 +96,7 @@ const LobbiesView: React.FC = () => {
             className="selector"
             style={{ width: '100%', maxWidth: 640, gap: '0.8rem' }}
           >
-            {lobbies.map(g => (
+            {lobbies.map((g: any) => (
               <li
                 key={g.id}
                 className="pill"
@@ -78,12 +104,12 @@ const LobbiesView: React.FC = () => {
               >
                 <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                   <code>{g.id}</code>
-                  <span>Players: {g.players}/4</span>
+                  <span>Players: {g.players?.length ?? 0}/4</span>
                   {g.targetScore && (
                     <span className="hint">Target: {g.targetScore}</span>
                   )}
                 </div>
-                <button className="chip" onClick={() => join(g.id)}>
+                <button className="chip" onClick={() => joinLobbyHandler(g.id)}>
                   Join
                 </button>
               </li>

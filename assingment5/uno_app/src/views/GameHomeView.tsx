@@ -1,13 +1,25 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import '../style/GameHome.css'
+import { useAppDispatch, useAppSelector } from '../store/hooks'
+import { selectIsAuthed, selectUsername } from '../store/authSlice'
+import {
+  createLobby,
+  subscribeAll,
+  refreshMyHand,
+} from '../store/serverGameSlice'
 
 const GameHomeView: React.FC = () => {
+  const dispatch = useAppDispatch()
+  const navigate = useNavigate()
+
+  const isAuthed = useAppSelector(selectIsAuthed)
+  const username = useAppSelector(selectUsername)
+
   const [botCounter, setBotCounter] = useState<number>(1)
   const [cardsPerPlayer, setCardsPerPlayer] = useState<number>(7)
   const [targetScore, setTargetScore] = useState<number>(500)
   const [error, setError] = useState<string>('')
-
-  const [loggedIn] = useState<boolean>(true)
 
   const increaseBotCounter = () => {
     if (botCounter < 3) {
@@ -28,15 +40,48 @@ const GameHomeView: React.FC = () => {
   }
 
   const startBotGame = () => {
-    console.log('Start bot game', { botCounter, cardsPerPlayer, targetScore })
+    if (!isAuthed) {
+      setError('Please log in first')
+      return
+    }
+
+    const name = username || 'You'
+    navigate(
+      `/game?botNumber=${botCounter}` +
+        `&playerName=${encodeURIComponent(name)}` +
+        `&cardsPerPlayer=${cardsPerPlayer}` +
+        `&targetScore=${targetScore}`
+    )
   }
 
-  const startOnline = () => {
-    console.log('Create online lobby', { cardsPerPlayer, targetScore })
+  const startOnline = async () => {
+    if (!isAuthed || !username) {
+      setError('Please log in first')
+      return
+    }
+    setError('')
+    try {
+      const result = await dispatch(
+        createLobby({
+          meName: username,
+          targetScore,
+          cardsPerPlayer,
+        })
+      ).unwrap()
+
+      // result has { gameId, meIndex, game }
+      const gameId: string = result.gameId
+      await dispatch(subscribeAll())
+      await dispatch(refreshMyHand())
+
+      navigate(`/game-server?gameId=${encodeURIComponent(gameId)}`)
+    } catch (e: any) {
+      setError(e?.message ?? 'Failed to create lobby')
+    }
   }
 
   const browseLobbies = () => {
-    console.log('Browse public lobbies')
+    navigate('/lobbies')
   }
 
   return (
@@ -50,16 +95,16 @@ const GameHomeView: React.FC = () => {
           <div className="word">UNO</div>
         </div>
 
-        {!loggedIn && (
+        {!isAuthed && (
           <div className="auth-warning">
             <p>You need to log in before playing.</p>
-            <button className="cta" onClick={() => console.log('Go to login')}>
+            <button className="cta" onClick={() => navigate('/')}>
               Go to Login
             </button>
           </div>
         )}
 
-        {loggedIn && (
+        {isAuthed && (
           <>
             <div className="selector">
               <label className="label" htmlFor="startingCards">

@@ -1,35 +1,65 @@
-// src/views/AuthView.tsx
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import '../style/Auth.css'
+import { useAppDispatch, useAppSelector } from '../store/hooks'
+import {
+  login,
+  register,
+  selectAuthError,
+  selectAuthStatus,
+  selectIsAuthed,
+} from '../store/authSlice'
 
 const AuthView: React.FC = () => {
+  const dispatch = useAppDispatch()
+  const navigate = useNavigate()
+
+  const isAuthed = useAppSelector(selectIsAuthed)
+  const status = useAppSelector(selectAuthStatus)
+  const errorFromStore = useAppSelector(selectAuthError)
+
   const [mode, setMode] = useState<'login' | 'register'>('login')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [busy, setBusy] = useState(false)
+  const [localError, setLocalError] = useState<string | null>(null)
+
+  const busy = status === 'loading'
+  const error = localError || errorFromStore || null
+
+  useEffect(() => {
+    if (isAuthed) {
+      navigate('/home')
+    }
+  }, [isAuthed, navigate])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setError(null)
+    setLocalError(null)
 
     if (!username.trim() || !password) {
-      setError('Username and password are required')
+      setLocalError('Username and password are required')
       return
     }
 
-    setBusy(true)
-    // Dummy async to mimic auth
-    setTimeout(() => {
-      console.log(`Submitting ${mode} with`, { username, password })
-      setBusy(false)
-    }, 600)
+    const payload = { username: username.trim(), password }
+
+    try {
+      if (mode === 'login') {
+        await dispatch(login(payload)).unwrap()
+      } else {
+        await dispatch(register(payload)).unwrap()
+      }
+      // navigation happens in useEffect when isAuthed flips true
+    } catch (err: any) {
+      // thunk already put error in store, but just in case
+      setLocalError(err?.message ?? 'Authentication failed')
+    }
   }
 
   const toggleMode = () => {
     setMode(prev => (prev === 'login' ? 'register' : 'login'))
-    setError(null)
+    setLocalError(null)
   }
 
   return (

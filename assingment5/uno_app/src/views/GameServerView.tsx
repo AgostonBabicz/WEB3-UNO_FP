@@ -1,133 +1,132 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import '../style/Game.css'
-import { Color, CardNumber } from '../types/deck.types'
+
+import { useAppDispatch, useAppSelector } from '../store/hooks'
+import {
+  selectServerGame,
+  selectServerGamePopUp,
+  selectServerGameGameOver,
+  selectServerGameMyHand,
+  selectServerGamePlayable,
+  subscribeAll,
+  refreshMyHand,
+  startRound,
+  playCard,
+  drawCard,
+  sayUno as sayUnoThunk,
+  accuse as accuseThunk,
+  resetGameOver,
+} from '../store/serverGameSlice'
+import { Color } from '../types/deck.types'
 import { PopUpMessage } from '../components/PopUpMessage'
 import { UnoCard } from '../components/UnoCard'
 import { UnoDeck } from '../components/UnoDeck'
-import { COLORS } from '../models/colors'
-
-type Player = {
-  id: string
-  name: string
-  score: number
-  handCount: number
-}
-
-type SimpleCard = {
-  type: 'NUMBERED' | 'SKIP' | 'REVERSE' | 'DRAW' | 'WILD' | 'WILD_DRAW'
-  color?: Color
-  number?: CardNumber
-}
-
-const COLOR_LIST: Color[] = ['RED', 'YELLOW', 'GREEN', 'BLUE']
 
 const GameServerView: React.FC = () => {
-  const [players] = useState<Player[]>([
-    { id: '1', name: 'Alice', score: 120, handCount: 5 },
-    { id: '2', name: 'Bob', score: 80, handCount: 7 },
-    { id: '3', name: 'You', score: 150, handCount: 6 },
-  ])
+  const dispatch = useAppDispatch()
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
 
-  const [meIx] = useState<number>(2)
-  const [currentTurn, setCurrentTurn] = useState<number | null>(0)
-  const [roundStarted, setRoundStarted] = useState(false)
+  const { gameId, game, meIndex } = useAppSelector(selectServerGame)
+  const myHand = useAppSelector(selectServerGameMyHand)
+  const playable = useAppSelector(selectServerGamePlayable)
+  const popUp = useAppSelector(selectServerGamePopUp)
+  const gameOver = useAppSelector(selectServerGameGameOver)
+
   const [showColorPicker, setShowColorPicker] = useState<number | null>(null)
 
-  const [myHand, setMyHand] = useState<SimpleCard[]>(() =>
-    Array.from({ length: 6 }, (_, i) => ({
-      type: 'NUMBERED',
-      color: COLOR_LIST[i % COLOR_LIST.length],
-      number: (((i + 1) % 10) as CardNumber),
-    }))
-  )
+  const urlGameId = searchParams.get('gameId') || ''
 
-  const [discardTop, setDiscardTop] = useState<SimpleCard | null>(() =>
-    myHand.length > 0 ? myHand[0] : null
-  )
-  const [drawPileSize] = useState<number>(30)
-  const [targetScore] = useState<number>(500)
+  const players = useMemo(() => game?.players ?? [], [game])
+  const roundStarted = !!game?.currentRound
+  const enoughPlayers = players.length >= 2
 
-  const [showPopUpMessage, setShowPopUpMessage] = useState(false)
-  const [popUpTitle, setPopUpTitle] = useState('')
-  const [popUpMessage, setPopUpMessage] = useState('')
+  const currentTurn: number | null =
+    game?.currentRound?.playerInTurnIndex ?? null
 
-  const enoughPlayers = useMemo(() => players.length >= 2, [players])
-  const myTurn = useMemo(
-    () => roundStarted && currentTurn === meIx,
-    [roundStarted, currentTurn, meIx]
-  )
+  const myTurn =
+    roundStarted &&
+    meIndex != null &&
+    currentTurn != null &&
+    currentTurn === meIndex
 
-  function canPlayAt(ix: number) {
-    return myTurn && !!myHand[ix]
-  }
+  const yourHand = myHand
 
-  async function onPlayCard(ix: number) {
+  const discardTop = game?.currentRound?.discardTop
+  const drawPileSize = game?.currentRound?.drawPileSize ?? 0
+
+  const canPlayAt = (ix: number) => playable.includes(ix)
+
+  // handle subscriptions on mount
+  useEffect(() => {
+    // assume gameId already set by createLobby / joinLobby in Home/Lobbies
+    if (urlGameId && !gameId) {
+      // optional: could add an action to sync gameId from URL if needed
+      // for now we just rely on store gameId
+      console.warn('URL gameId present but store has no gameId. You may want to hydrate from URL.')
+    }
+
+    dispatch(subscribeAll())
+    dispatch(refreshMyHand())
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // navigate to game over when serverGameSlice says so
+  useEffect(() => {
+    if (gameOver.triggered && gameOver.winner) {
+      navigate(`/game-over?winner=${encodeURIComponent(gameOver.winner)}`)
+      dispatch(resetGameOver())
+    }
+  }, [gameOver.triggered, gameOver.winner, navigate, dispatch])
+
+  const onPlayCard = async (ix: number) => {
     if (!myTurn) return
-    const card = myHand[ix]
+    const card = yourHand[ix]
     if (!card) return
+    if (!canPlayAt(ix)) return
     if (card.type === 'WILD' || card.type === 'WILD_DRAW') {
       setShowColorPicker(ix)
-      return
+    } else {
+      await dispatch(playCard({ cardIndex: ix })).unwrap()
     }
-    const newHand = myHand.filter((_, i) => i !== ix)
-    setMyHand(newHand)
-    setDiscardTop(card)
-    setCurrentTurn(prev => {
-      if (prev === null) return 0
-      return (prev + 1) % players.length
-    })
   }
 
-  async function pickColor(c: Color) {
+  const pickColor = async (c: Color) => {
     if (showColorPicker === null) return
-    const card = myHand[showColorPicker]
-    if (!card) return
-    const colored: SimpleCard = { ...card, color: c }
-    const newHand = myHand.map((c2, i) => (i === showColorPicker ? colored : c2))
-    setMyHand(newHand)
-    setDiscardTop(colored)
+    await dispatch(playCard({ cardIndex: showColorPicker, askedColor: c })).unwrap()
     setShowColorPicker(null)
-    setCurrentTurn(prev => {
-      if (prev === null) return 0
-      return (prev + 1) % players.length
-    })
   }
 
-  async function onDraw() {
+  const onDraw = async () => {
     if (!myTurn) return
-    const card: SimpleCard = {
-   type: 'NUMBERED',
-   color: COLORS[Math.floor(Math.random() * COLORS.length)],
-   number: (Math.floor(Math.random() * 10) as CardNumber),
- }
-    setMyHand(prev => [...prev, card])
+    await dispatch(drawCard()).unwrap()
   }
 
-  async function onUno() {
-    setPopUpTitle('UNO')
-    setPopUpMessage('You called UNO in the online game mock.')
-    setShowPopUpMessage(true)
+  const onUno = async () => {
+    await dispatch(sayUnoThunk()).unwrap()
   }
 
-  async function accuseOpponent(opIx: number) {
-    const p = players[opIx]
-    setPopUpTitle('Accuse')
-    setPopUpMessage(`You accused ${p?.name ?? 'someone'} of not saying UNO.`)
-    setShowPopUpMessage(true)
+  const accuseOpponent = async (opIx: number) => {
+    await dispatch(accuseThunk(opIx)).unwrap()
   }
 
-  async function onStartRound() {
-    setRoundStarted(true)
-    setCurrentTurn(0)
+  const onStartRoundClick = async () => {
+    await dispatch(startRound()).unwrap()
   }
 
-  const clearMessage = () => setShowPopUpMessage(false)
+  const clearMessage = () => {
+    // hide PopUpMessage by action from slice
+    // but we already have clearMessage exported in serverGameSlice
+    dispatch({ type: 'serverGame/clearMessage' })
+  }
 
-  const visibleOpponents = players.filter((_, i) => i !== meIx)
+  const visibleOpponents = players.filter((_: any, i: number) => i !== meIndex)
 
   return (
     <main className={`play uno-theme${!myTurn ? ' waiting' : ''}`}>
-      <div className="target-score">Target: {targetScore}</div>
+      <div className="target-score">Target: {game?.targetScore ?? 500}</div>
       <div className="bg-swirl"></div>
 
       <div className="turn-banner">
@@ -152,14 +151,14 @@ const GameServerView: React.FC = () => {
         <button
           className="start-round-btn"
           disabled={!enoughPlayers}
-          onClick={onStartRound}
+          onClick={onStartRoundClick}
         >
           Start Round
         </button>
       )}
 
       <header className="row opponents">
-        {visibleOpponents.map(p => {
+        {visibleOpponents.map((p: any) => {
           const index = players.indexOf(p)
           const isPlaying = currentTurn === index
           return (
@@ -186,9 +185,9 @@ const GameServerView: React.FC = () => {
       </header>
 
       <PopUpMessage
-        show={showPopUpMessage}
-        title={popUpTitle || ''}
-        message={popUpMessage || ''}
+        show={popUp.show}
+        title={popUp.title || ''}
+        message={popUp.message || ''}
         onClose={clearMessage}
       />
 
@@ -212,17 +211,17 @@ const GameServerView: React.FC = () => {
 
       <footer className={`hand${myTurn ? ' playing' : ''}`}>
         <div className="column">
-          <span className="name">{players[meIx]?.name}</span>
+          <span className="name">{players[meIndex ?? 0]?.name}</span>
           <span className="score">
-            (Score: {players[meIx]?.score ?? 0})
+            (Score: {players[meIndex ?? 0]?.score ?? 0})
           </span>
         </div>
         <div className="fan">
-          {myHand.map((card, ix) => (
+          {yourHand.map((card: any, ix: number) => (
             <button
               key={ix}
               className="hand-card-btn"
-              disabled={!canPlayAt(ix)}
+              disabled={!myTurn || !canPlayAt(ix)}
               onClick={() => onPlayCard(ix)}
               title="Play"
             >
@@ -239,7 +238,11 @@ const GameServerView: React.FC = () => {
           <button className="btn draw" onClick={onDraw} disabled={!myTurn}>
             Draw
           </button>
-          <button className="btn uno" onClick={onUno} disabled={!roundStarted}>
+          <button
+            className="btn uno"
+            onClick={onUno}
+            disabled={!roundStarted}
+          >
             UNO!
           </button>
         </div>
@@ -248,12 +251,12 @@ const GameServerView: React.FC = () => {
       {showColorPicker !== null && (
         <div className="color-picker-backdrop">
           <div className="color-picker">
-            {COLOR_LIST.map(c => (
+            {['RED', 'YELLOW', 'GREEN', 'BLUE'].map(c => (
               <button
                 key={c}
                 className="color-chip"
                 data-color={c.toLowerCase()}
-                onClick={() => pickColor(c)}
+                onClick={() => pickColor(c as Color)}
               >
                 {c}
               </button>

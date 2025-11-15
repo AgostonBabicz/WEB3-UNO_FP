@@ -113,9 +113,6 @@ export async function createGame(
   publish: PublishFn,
   hostUserId?: string | null,
 ) {
-  if (players.length < 2) {
-    throw new Error('Need at least 2 players to create a game')
-  }
   if (players.length > 4) throw new Error('Max 4 players')
 
   const id = uuid()
