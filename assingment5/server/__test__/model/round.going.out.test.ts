@@ -11,7 +11,7 @@ import {
   winner,
   canPlayAny,
   score,
-} from '../../src/model/round'
+} from '../../src/models/round'
 import {
   deterministicShuffle,
   shuffleBuilder,

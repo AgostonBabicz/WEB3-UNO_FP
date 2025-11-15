@@ -1,7 +1,7 @@
 import { Shuffler, standardShuffler } from '../../src/utils/random_utils'
-import * as deck from '../../src/model/deck'
-import * as round from '../../src/model/round'
-import * as uno from '../../src/model/uno'
+import * as deck from '../../src/models/deck'
+import * as round from '../../src/models/round'
+import * as uno from '../../src/models/uno'
 import { Card, Deck } from '../../src/types/deck.types'
 import { Props, Game } from '../../src/types/uno.types'
 

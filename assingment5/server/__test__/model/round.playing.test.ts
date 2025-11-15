@@ -1,6 +1,6 @@
 import { describe, it, test, expect, beforeEach, jest } from '@jest/globals'
 import { createRound, createInitialDeck } from '../utils/test_adapter'
-import { canPlayAny, draw, play, topOfDiscard } from '../../src/model/round'
+import { canPlayAny, draw, play, topOfDiscard } from '../../src/models/round'
 import {
   deterministicShuffle as deterministicShuffler,
   noShuffle,

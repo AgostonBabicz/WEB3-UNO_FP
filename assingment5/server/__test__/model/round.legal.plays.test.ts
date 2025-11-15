@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from '@jest/globals'
 import { createRound } from '../utils/test_adapter'
-import { canPlay, play } from '../../src/model/round'
+import { canPlay, play } from '../../src/models/round'
 import { shuffleBuilder } from '../utils/shuffling'
 import { Round } from '../../src/types/round.types'
 
