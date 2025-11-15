@@ -288,10 +288,13 @@ export function canPlay(cardIx: number, state: Round): boolean {
     switch (top!.type) {
       case 'NUMBERED':
         if (played.type === 'NUMBERED') {
-          return (
-            played.color === effectiveColor ||
-            played.number === (isColored(top!) ? top.number : -1)
-          )
+          const sameNumber =
+          played.type === 'NUMBERED' &&
+          isColored(top!) &&
+          top!.type === 'NUMBERED' &&
+          played.number === top!.number
+
+        return played.color === effectiveColor || sameNumber
         }
         return played.color === effectiveColor
       case 'SKIP':
@@ -575,18 +578,21 @@ export function sayUno(playerIx: number, state: Round): Round {
     throw new Error('Player index out of bounds')
   }
 
+  const updatedUnoSayers = new Set<number>(s.unoSayersSinceLastAction)
+  updatedUnoSayers.add(playerIx)
+
   s = withState(s, {
     lastUnoSayer: playerIx,
-    unoSayersSinceLastAction: new Set<number>([
-      ...s.unoSayersSinceLastAction,
-      playerIx,
-    ]),
+    unoSayersSinceLastAction: updatedUnoSayers,
   })
+
   if (s.pendingUnoAccused === playerIx) {
     s = withState(s, { unoProtectedForWindow: true })
   }
+
   return s
 }
+
 
 export function catchUnoFailure(
   { accuser, accused }: { accuser: number; accused: number },
