@@ -85,7 +85,7 @@ function updatePlayerHand(
   updater: (h: PlayerHand) => PlayerHand
 ): Round {
   return withState(s, {
-    playerHands: s.playerHands.update(p, (h) =>
+    playerHands: s.playerHands.update(p, h =>
       withHandView(updater(h ?? createHand()))
     ),
   })
@@ -125,7 +125,7 @@ function makeRoundState(
       const [c, nd] = deckDeal(drawDeck)
       if (!c) throw new Error('Not enough cards')
       drawDeck = withDeckView(nd)
-      playerHands = playerHands.update(p, (h) => withHandView(handAdd(h!, c)))
+      playerHands = playerHands.update(p, h => withHandView(handAdd(h!, c)))
     }
   }
 
@@ -166,7 +166,7 @@ function makeRoundState(
     lastUnoSayer: null,
     pendingUnoAccused: null,
     unoProtectedForWindow: false,
-    unoSayersSinceLastAction: new Set<number>(),
+    unoSayersSinceLastAction: [],
     playerInTurn: dealer,
   }
 }
@@ -232,7 +232,7 @@ function drawTo(s: Round, p: number, n = 1): [void, Round] {
     }
 
     state = setDrawDeck(state, nd)
-    state = updatePlayerHand(state, p, (h) => handAdd(h, card!))
+    state = updatePlayerHand(state, p, h => handAdd(h, card!))
   }
 
   return [undefined, state]
@@ -289,12 +289,12 @@ export function canPlay(cardIx: number, state: Round): boolean {
       case 'NUMBERED':
         if (played.type === 'NUMBERED') {
           const sameNumber =
-          played.type === 'NUMBERED' &&
-          isColored(top!) &&
-          top!.type === 'NUMBERED' &&
-          played.number === top!.number
+            played.type === 'NUMBERED' &&
+            isColored(top!) &&
+            top!.type === 'NUMBERED' &&
+            played.number === top!.number
 
-        return played.color === effectiveColor || sameNumber
+          return played.color === effectiveColor || sameNumber
         }
         return played.color === effectiveColor
       case 'SKIP':
@@ -320,7 +320,7 @@ export function canPlay(cardIx: number, state: Round): boolean {
         return !hasAnyColored
       }
       const hasColor = handToArray(state.playerHands.get(p)!).some(
-        (c) => isColored(c) && c.color === effectiveColor
+        c => isColored(c) && c.color === effectiveColor
       )
       return !hasColor
     }
@@ -377,19 +377,19 @@ export function play(
   if (handSizeNow === 2) {
     s = withState(s, {
       pendingUnoAccused: p,
-      unoProtectedForWindow: s.unoSayersSinceLastAction.has(p),
+      unoProtectedForWindow: s.unoSayersSinceLastAction.includes(p),
       lastUnoSayer: null,
     })
   }
 
   // remove from hand
-  s = updatePlayerHand(s, p, (h) => handRemove(h, playedCard))
+  s = updatePlayerHand(s, p, h => handRemove(h, playedCard))
   s = withState(s, { resolving: true })
 
   // push to discard and set color
   s = setDiscardDeck(s, deckPutTop(s.discardDeck, playedCard))
   s = withState(s, {
-    currentColor: isColored(playedCard) ? playedCard.color : (askedColor ?? ''),
+    currentColor: isColored(playedCard) ? playedCard.color : askedColor ?? '',
   })
 
   // Apply effects and advance
@@ -437,7 +437,7 @@ export function play(
   s = withState(s, {
     lastActor: p,
     resolving: false,
-    unoSayersSinceLastAction: new Set<number>(),
+    unoSayersSinceLastAction: [],
   })
 
   const w = winner(s)
@@ -446,7 +446,7 @@ export function play(
       playerInTurn: undefined,
       currentPlayerIndex: -1 as unknown as number,
       resolving: false,
-      unoSayersSinceLastAction: new Set<number>(),
+      unoSayersSinceLastAction: [],
       scored: false,
     })
   }
@@ -489,7 +489,7 @@ export function draw(state: Round): Round {
   }
 
   s = setDrawDeck(s, rest)
-  s = updatePlayerHand(s, p, (h) => handAdd(h, card!))
+  s = updatePlayerHand(s, p, h => handAdd(h, card!))
   s = withState(s, { resolving: true, lastActor: p })
 
   if (deckSize(s.drawDeck) === 0) {
@@ -514,7 +514,7 @@ export function draw(state: Round): Round {
 
   s = withState(s, {
     resolving: false,
-    unoSayersSinceLastAction: new Set<number>(),
+    unoSayersSinceLastAction: [],
   })
 
   return s
@@ -526,8 +526,7 @@ function ensureUnoState(state: Round): Round {
     unoProtectedForWindow: state.unoProtectedForWindow ?? false,
     lastUnoSayer: state.lastUnoSayer ?? null,
     lastActor: state.lastActor ?? null,
-    unoSayersSinceLastAction:
-      state.unoSayersSinceLastAction ?? new Set<number>(),
+    unoSayersSinceLastAction: state.unoSayersSinceLastAction ?? [],
   })
 }
 
@@ -540,7 +539,7 @@ export function winner(state: Round): number | undefined {
 }
 
 export function hasEnded(state: Round): boolean {
-  return state.playerHands.some((h) => withHandView(h).size() === 0)
+  return state.playerHands.some(h => withHandView(h).size() === 0)
 }
 
 export function score(state: Round): number | undefined {
@@ -578,12 +577,12 @@ export function sayUno(playerIx: number, state: Round): Round {
     throw new Error('Player index out of bounds')
   }
 
-  const updatedUnoSayers = new Set<number>(s.unoSayersSinceLastAction)
-  updatedUnoSayers.add(playerIx)
+  const prev = s.unoSayersSinceLastAction
+  const updated = prev.includes(playerIx) ? prev : [...prev, playerIx]
 
   s = withState(s, {
     lastUnoSayer: playerIx,
-    unoSayersSinceLastAction: updatedUnoSayers,
+    unoSayersSinceLastAction: updated,
   })
 
   if (s.pendingUnoAccused === playerIx) {
@@ -592,7 +591,6 @@ export function sayUno(playerIx: number, state: Round): Round {
 
   return s
 }
-
 
 export function catchUnoFailure(
   { accuser, accused }: { accuser: number; accused: number },

@@ -105,7 +105,6 @@ function ensureRoundId(g: Game): string {
 function clearRoundId(g: Game) {
   ROUND_IDS.set(g, null)
 }
-// Public API the resolvers call
 export async function createGame(
   players: string[],
   targetScore: number,

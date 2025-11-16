@@ -60,17 +60,13 @@ const GameServerView: React.FC = () => {
 
   // handle subscriptions on mount
   useEffect(() => {
-    // assume gameId already set by createLobby / joinLobby in Home/Lobbies
     if (urlGameId && !gameId) {
-      // optional: could add an action to sync gameId from URL if needed
-      // for now we just rely on store gameId
       console.warn('URL gameId present but store has no gameId. You may want to hydrate from URL.')
     }
 
     dispatch(subscribeAll())
     dispatch(refreshMyHand())
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // navigate to game over when serverGameSlice says so
@@ -184,12 +180,12 @@ const GameServerView: React.FC = () => {
         })}
       </header>
 
-      <PopUpMessage
+      {/* <PopUpMessage
         show={popUp.show}
         title={popUp.title || ''}
         message={popUp.message || ''}
         onClose={clearMessage}
-      />
+      /> */}
 
       <section className="table">
         <div className="pile discard">

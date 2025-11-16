@@ -128,7 +128,9 @@ export const loadWaitingGames = createAsyncThunk(
   'serverGame/loadWaitingGames',
   async (_, { rejectWithValue }) => {
     try {
+      console.log('Loading waiting games...')
       const { data } = await apollo.query<{waitingGames:any}>({ query: WAITING_GAMES, fetchPolicy: 'no-cache' })
+      console.log('Loaded waiting games:', data?.waitingGames)
       return (data?.waitingGames ?? []) as any[]
     } catch (e: any) {
       return rejectWithValue(e?.message ?? 'Failed to load lobbies')
@@ -162,7 +164,6 @@ export const startRound = createAsyncThunk(
       const updatedGame = data?.startRound ?? existingGame
       if (!updatedGame) return null
 
-      // after round start, refresh hand
       await dispatch(refreshMyHand()).unwrap()
       return updatedGame
     } catch (e: any) {
@@ -315,7 +316,6 @@ export const accuse = createAsyncThunk(
   }
 )
 
-// Subscription helper: updates + events
 export const subscribeAll = createAsyncThunk(
   'serverGame/subscribeAll',
   async (_, { getState, dispatch }) => {

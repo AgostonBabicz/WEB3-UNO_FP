@@ -27,19 +27,14 @@ export function createGame(props: Partial<Props>): Game {
   const scores: ReadonlyArray<number> = Array(playerCount).fill(0)
 
   const dealer = randomizer(playerCount)
-  const currentRound = createRound(
-    [...players],
-    dealer,
-    shuffler,
-    cardsPerPlayer
-  )
+
 
   return {
     playerCount,
     targetScore,
     players,
     scores,
-    currentRound,
+    currentRound: null,
     randomizer,
     shuffler,
     cardsPerPlayer,

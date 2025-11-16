@@ -24,7 +24,7 @@ export type Round = Readonly<{
   lastUnoSayer: number | null
   pendingUnoAccused: number | null
   unoProtectedForWindow: boolean
-  unoSayersSinceLastAction: Set<number>
+  unoSayersSinceLastAction: ReadonlyArray<number>
   playerInTurn: number | undefined
   scored?: boolean
 }>
