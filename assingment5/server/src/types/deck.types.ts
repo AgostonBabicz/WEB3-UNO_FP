@@ -1,12 +1,6 @@
 import { List } from 'immutable'
 
-export type Type =
-  | 'NUMBERED'
-  | 'SKIP'
-  | 'REVERSE'
-  | 'DRAW'
-  | 'WILD'
-  | 'WILD_DRAW'
+export type Type = 'NUMBERED' | 'SKIP' | 'REVERSE' | 'DRAW' | 'WILD' | 'WILD_DRAW'
 
 export type Deck<C extends Card = Card> = Readonly<List<C>> & {
   readonly length: number

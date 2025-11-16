@@ -1,8 +1,8 @@
-import { Card } from "src/types/deck.types"
-import type { Game } from "src/types/uno.types"
-import { GameRepository } from "../../repository/gameRepository"
-import { RoundRepository } from "../../repository/roundRepository"
-import { getHand as roundGetHand } from "src/models/round"
+import { Card } from 'src/types/deck.types'
+import type { Game } from 'src/types/uno.types'
+import { GameRepository } from '../../repository/gameRepository'
+import { RoundRepository } from '../../repository/roundRepository'
+import { getHand as roundGetHand } from 'src/models/round'
 
 // Minimal DTOs so we never import the old GameRuntime again
 export type PersistScoreRow = {
@@ -18,12 +18,18 @@ function computePointsFromHands(hands: Card[][], winnerIx: number): { perPlayer:
     let sum = 0
     for (const c of hands[i]) {
       switch (c.type) {
-        case "NUMBERED": sum += c.number; break
-        case "SKIP":
-        case "REVERSE":
-        case "DRAW": sum += 20; break
-        case "WILD":
-        case "WILD_DRAW": sum += 50; break
+        case 'NUMBERED':
+          sum += c.number
+          break
+        case 'SKIP':
+        case 'REVERSE':
+        case 'DRAW':
+          sum += 20
+          break
+        case 'WILD':
+        case 'WILD_DRAW':
+          sum += 50
+          break
       }
     }
     perPlayer[i] = sum
@@ -35,53 +41,63 @@ function computePointsFromHands(hands: Card[][], winnerIx: number): { perPlayer:
 export async function persistGameCreate(
   gameId: string,
   game: Game,
-  hostUserId: string | null
+  hostUserId: string | null,
 ): Promise<void> {
   const grepo = new GameRepository()
 
-  await grepo.create({
-    id: gameId,
-    targetScore: game.targetScore,
-    cardsPerPlayer: game.cardsPerPlayer,
-  }).catch(console.error)
+  await grepo
+    .create({
+      id: gameId,
+      targetScore: game.targetScore,
+      cardsPerPlayer: game.cardsPerPlayer,
+    })
+    .catch(console.error)
 
   if (hostUserId) {
-    await grepo.playerJoinsGame({
-      gameId,
-      userId: hostUserId,
-      seatIndex: 0,
-    }).catch(console.error)
+    await grepo
+      .playerJoinsGame({
+        gameId,
+        userId: hostUserId,
+        seatIndex: 0,
+      })
+      .catch(console.error)
   }
 }
-
 
 // Persist that a user joined seatIndex
 export async function persistPlayerJoin(
   gameId: string,
   userId: string | null,
-  seatIndex: number
+  seatIndex: number,
 ): Promise<void> {
   if (!userId) return
   const grepo = new GameRepository()
-  await grepo.playerJoinsGame({
-    gameId,
-    userId,
-    seatIndex,
-  }).catch(console.error)
+  await grepo
+    .playerJoinsGame({
+      gameId,
+      userId,
+      seatIndex,
+    })
+    .catch(console.error)
 }
 
 // Persist round start
 export async function persistRoundStart(
   gameId: string,
   roundNo: number,
-  startedAtISO: string = new Date().toISOString()
+  startedAtISO: string = new Date().toISOString(),
 ): Promise<string | undefined> {
   const rrepo = new RoundRepository()
-  const row = await rrepo.start({
-    gameId,
-    number: roundNo,
-    startedAt: startedAtISO,
-  }).catch((e) => { console.error(e); return undefined })
+  const row = await rrepo
+    .start({
+      gameId,
+      number: roundNo,
+      startedAt: startedAtISO,
+    })
+    .catch((e) => {
+      console.error(e)
+      return undefined
+    })
   return row?.id
 }
 
@@ -91,14 +107,14 @@ export async function persistRoundFinish(
   game: Game,
   winnerIx: number,
   roundRowId?: string,
-  userIds: Array<string | null> = []
+  userIds: Array<string | null> = [],
 ): Promise<void> {
   const round = game.currentRound
   if (!round) return
 
   const hands: Card[][] = Array.from(
     { length: game.playerCount },
-    (_ , i) => roundGetHand(round, i) as Card[]
+    (_, i) => roundGetHand(round, i) as Card[],
   )
 
   const rp = computePointsFromHands(hands, winnerIx)

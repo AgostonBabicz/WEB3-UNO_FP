@@ -27,9 +27,7 @@ function wrapDeck<C extends Card>(l: List<C>): Deck<C> {
 export function createEmptyDeck<C extends Card = Card>(): Deck<C> {
   return wrapDeck(List<C>())
 }
-export function createDeckWithCards<C extends Card>(
-  cards: ReadonlyArray<C>
-): Deck<C> {
+export function createDeckWithCards<C extends Card>(cards: ReadonlyArray<C>): Deck<C> {
   return wrapDeck(List(cards))
 }
 export function deal<C extends Card>(deck: Deck<C>): [C | undefined, Deck<C>] {
@@ -43,10 +41,7 @@ export function putCardOnTop<C extends Card>(deck: Deck<C>, card: C): Deck<C> {
 export function getDeckUnderTop<C extends Card>(deck: Deck<C>): Deck<C> {
   return wrapDeck(deck.shift())
 }
-export function shuffle<C extends Card>(
-  deck: Deck<C>,
-  shuffler: Shuffler<C>
-): Deck<C> {
+export function shuffle<C extends Card>(deck: Deck<C>, shuffler: Shuffler<C>): Deck<C> {
   return wrapDeck(List(shuffler(deck.toArray())))
 }
 
@@ -65,22 +60,22 @@ export function toArray<C extends Card>(deck: Deck<C>): C[] {
 
 export function mapDeck<C extends Card, R>(
   deck: Deck<C>,
-  mapper: (card: C, index: number) => R
+  mapper: (card: C, index: number) => R,
 ): List<R> {
   return deck.map(mapper) as List<R>
 }
 
 export function filterDeck<C extends Card, S extends C>(
   deck: Deck<C>,
-  predicate: (card: C, index: number) => card is S
+  predicate: (card: C, index: number) => card is S,
 ): Deck<S>
 export function filterDeck<C extends Card>(
   deck: Deck<C>,
-  predicate: (card: C, index: number) => boolean
+  predicate: (card: C, index: number) => boolean,
 ): Deck<C>
 export function filterDeck(
   deck: Deck<Card>,
-  predicate: (card: Card, index: number) => boolean
+  predicate: (card: Card, index: number) => boolean,
 ): Deck<Card> {
   return deck.filter(predicate) as Deck<Card>
 }

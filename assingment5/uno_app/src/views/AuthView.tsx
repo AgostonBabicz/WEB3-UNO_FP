@@ -58,7 +58,7 @@ const AuthView: React.FC = () => {
   }
 
   const toggleMode = () => {
-    setMode(prev => (prev === 'login' ? 'register' : 'login'))
+    setMode((prev) => (prev === 'login' ? 'register' : 'login'))
     setLocalError(null)
   }
 
@@ -103,7 +103,7 @@ const AuthView: React.FC = () => {
               className="input"
               type="text"
               value={username}
-              onChange={e => setUsername(e.target.value)}
+              onChange={(e) => setUsername(e.target.value)}
               placeholder="Your username"
               autoComplete="username"
             />
@@ -119,14 +119,14 @@ const AuthView: React.FC = () => {
                 className="input"
                 type={showPassword ? 'text' : 'password'}
                 value={password}
-                onChange={e => setPassword(e.target.value)}
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 autoComplete="current-password"
               />
               <button
                 className="btn icon"
                 type="button"
-                onClick={() => setShowPassword(p => !p)}
+                onClick={() => setShowPassword((p) => !p)}
                 aria-pressed={showPassword}
                 aria-label="Toggle password visibility"
               >

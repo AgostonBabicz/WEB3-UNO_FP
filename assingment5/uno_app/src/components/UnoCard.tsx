@@ -19,18 +19,17 @@ export const UnoCard: React.FC<UnoCardProps> = ({ type, color, number }) => {
     type === 'NUMBERED'
       ? numberLabel(number)
       : type === 'DRAW'
-      ? '+2'
-      : type === 'WILD_DRAW'
-      ? '+4'
-      : type === 'REVERSE'
-      ? '↺'
-      : type === 'SKIP'
-      ? '⦸'
-      : 'WILD'
+        ? '+2'
+        : type === 'WILD_DRAW'
+          ? '+4'
+          : type === 'REVERSE'
+            ? '↺'
+            : type === 'SKIP'
+              ? '⦸'
+              : 'WILD'
 
   const mainClassName =
-    'main' +
-    (type !== 'NUMBERED' && type !== 'WILD' && type !== 'WILD_DRAW' ? ' symbol' : '')
+    'main' + (type !== 'NUMBERED' && type !== 'WILD' && type !== 'WILD_DRAW' ? ' symbol' : '')
 
   const colorClass = color ? String(color).toLowerCase() : 'wild'
 

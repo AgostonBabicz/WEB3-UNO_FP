@@ -66,7 +66,7 @@ export const createLobby = createAsyncThunk(
   async (opts: CreateLobbyOpts, { getState, rejectWithValue }) => {
     try {
       const auth = selectAuth(getState() as RootState)
-      const { data } = await apollo.mutate<{createGame: any}>({
+      const { data } = await apollo.mutate<{ createGame: any }>({
         mutation: CREATE_GAME,
         variables: {
           input: {
@@ -87,7 +87,7 @@ export const createLobby = createAsyncThunk(
     } catch (e: any) {
       return rejectWithValue(e?.message ?? 'Create lobby failed')
     }
-  }
+  },
 )
 
 export const joinLobby = createAsyncThunk(
@@ -96,7 +96,7 @@ export const joinLobby = createAsyncThunk(
     try {
       const auth = selectAuth(getState() as RootState)
 
-      const { data: q } = await apollo.query<{game:any}>({
+      const { data: q } = await apollo.query<{ game: any }>({
         query: GET_GAME,
         variables: { gameId: payload.id },
         fetchPolicy: 'no-cache',
@@ -106,7 +106,7 @@ export const joinLobby = createAsyncThunk(
       const currentPlayers = q.game.players.length
       if (currentPlayers >= 4) throw new Error('Lobby full')
 
-      const { data } = await apollo.mutate<{addPlayer:any}>({
+      const { data } = await apollo.mutate<{ addPlayer: any }>({
         mutation: ADD_PLAYER,
         variables: { gameId: payload.id, name: payload.myName, userId: auth.id },
       })
@@ -121,7 +121,7 @@ export const joinLobby = createAsyncThunk(
     } catch (e: any) {
       return rejectWithValue(e?.message ?? 'Join lobby failed')
     }
-  }
+  },
 )
 
 export const loadWaitingGames = createAsyncThunk(
@@ -129,13 +129,16 @@ export const loadWaitingGames = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       console.log('Loading waiting games...')
-      const { data } = await apollo.query<{waitingGames:any}>({ query: WAITING_GAMES, fetchPolicy: 'no-cache' })
+      const { data } = await apollo.query<{ waitingGames: any }>({
+        query: WAITING_GAMES,
+        fetchPolicy: 'no-cache',
+      })
       console.log('Loaded waiting games:', data?.waitingGames)
       return (data?.waitingGames ?? []) as any[]
     } catch (e: any) {
       return rejectWithValue(e?.message ?? 'Failed to load lobbies')
     }
-  }
+  },
 )
 
 export const startRound = createAsyncThunk(
@@ -148,18 +151,17 @@ export const startRound = createAsyncThunk(
 
       if (!serverGame.gameId) return null
 
-      const { data: gq } = await apollo.query<{game:any}>({
+      const { data: gq } = await apollo.query<{ game: any }>({
         query: GET_GAME,
         variables: { gameId: serverGame.gameId },
         fetchPolicy: 'no-cache',
       })
       const existingGame = gq?.game
 
-      const { data } = await apollo.mutate<{startRound:any}>({
+      const { data } = await apollo.mutate<{ startRound: any }>({
         mutation: START_ROUND,
         variables: { input: { gameId: serverGame.gameId, userId: auth.id } },
       })
-
 
       const updatedGame = data?.startRound ?? existingGame
       if (!updatedGame) return null
@@ -169,7 +171,7 @@ export const startRound = createAsyncThunk(
     } catch (e: any) {
       return rejectWithValue(e?.message ?? 'startRound failed')
     }
-  }
+  },
 )
 
 export const refreshMyHand = createAsyncThunk(
@@ -180,13 +182,13 @@ export const refreshMyHand = createAsyncThunk(
       const { gameId, meIndex } = state.serverGame
       if (gameId == null || meIndex == null) return null
 
-      const [h, p] = await Promise.all<{data:any}>([
+      const [h, p] = await Promise.all<{ data: any }>([
         apollo.query({
           query: HAND,
           variables: { gameId, playerIndex: meIndex },
           fetchPolicy: 'no-cache',
         }),
-        apollo.query<{data:any}>({
+        apollo.query<{ data: any }>({
           query: PLAYABLE,
           variables: { gameId, playerIndex: meIndex },
           fetchPolicy: 'no-cache',
@@ -200,12 +202,15 @@ export const refreshMyHand = createAsyncThunk(
     } catch (e: any) {
       return rejectWithValue(e?.message ?? 'refreshMyHand failed')
     }
-  }
+  },
 )
 
 export const playCard = createAsyncThunk(
   'serverGame/playCard',
-  async ({ cardIndex, askedColor }: { cardIndex: number; askedColor?: Color }, { getState, dispatch, rejectWithValue }) => {
+  async (
+    { cardIndex, askedColor }: { cardIndex: number; askedColor?: Color },
+    { getState, dispatch, rejectWithValue },
+  ) => {
     try {
       const state = getState() as RootState
       const { gameId, meIndex } = state.serverGame
@@ -230,7 +235,7 @@ export const playCard = createAsyncThunk(
     } catch (e: any) {
       return rejectWithValue(e?.message ?? 'playCard failed')
     }
-  }
+  },
 )
 
 export const drawCard = createAsyncThunk(
@@ -258,7 +263,7 @@ export const drawCard = createAsyncThunk(
     } catch (e: any) {
       return rejectWithValue(e?.message ?? 'drawCard failed')
     }
-  }
+  },
 )
 
 export const sayUno = createAsyncThunk(
@@ -285,7 +290,7 @@ export const sayUno = createAsyncThunk(
     } catch (e: any) {
       return rejectWithValue(e?.message ?? 'sayUno failed')
     }
-  }
+  },
 )
 
 export const accuse = createAsyncThunk(
@@ -313,7 +318,7 @@ export const accuse = createAsyncThunk(
     } catch (e: any) {
       return rejectWithValue(e?.message ?? 'accuse failed')
     }
-  }
+  },
 )
 
 export const subscribeAll = createAsyncThunk(
@@ -326,41 +331,37 @@ export const subscribeAll = createAsyncThunk(
     updatesSub?.unsubscribe()
     eventsSub?.unsubscribe()
 
-    updatesSub = apollo
-      .subscribe({ query: SUB_UPDATES, variables: { gameId } })
-      .subscribe({
-        next: async ({ data }: any) => {
-          const g = data?.gameUpdates
-          if (g) {
-            dispatch(serverGameSlice.actions.setGame(g))
-            dispatch(serverGameSlice.actions.checkGameOverFromGame(g))
-            await dispatch(refreshMyHand())
-          }
-        },
-        error: () => {},
-      })
+    updatesSub = apollo.subscribe({ query: SUB_UPDATES, variables: { gameId } }).subscribe({
+      next: async ({ data }: any) => {
+        const g = data?.gameUpdates
+        if (g) {
+          dispatch(serverGameSlice.actions.setGame(g))
+          dispatch(serverGameSlice.actions.checkGameOverFromGame(g))
+          await dispatch(refreshMyHand())
+        }
+      },
+      error: () => {},
+    })
 
-    eventsSub = apollo
-      .subscribe({ query: SUB_EVENTS, variables: { gameId } })
-      .subscribe({
-        next: ({ data }: any) => {
-          const ev = data?.gameEvents
-          if (!ev) return
-          if (ev.__typename === 'GameEnded') {
-            dispatch(serverGameSlice.actions.handleGameEnded(ev))
-          }
-          if (ev.__typename === 'Notice') {
-            dispatch(
-              serverGameSlice.actions.setMessage({
-                title: ev.title,
-                message: ev.message,
-              })
-            )
-          }
-        },
-        error: () => {},
-      })
-  }
+    eventsSub = apollo.subscribe({ query: SUB_EVENTS, variables: { gameId } }).subscribe({
+      next: ({ data }: any) => {
+        const ev = data?.gameEvents
+        if (!ev) return
+        if (ev.__typename === 'GameEnded') {
+          dispatch(serverGameSlice.actions.handleGameEnded(ev))
+        }
+        if (ev.__typename === 'Notice') {
+          dispatch(
+            serverGameSlice.actions.setMessage({
+              title: ev.title,
+              message: ev.message,
+            }),
+          )
+        }
+      },
+      error: () => {},
+    })
+  },
 )
 
 const serverGameSlice = createSlice({
@@ -401,7 +402,7 @@ const serverGameSlice = createSlice({
       state.gameOverTriggered = false
     },
   },
-  extraReducers: builder => {
+  extraReducers: (builder) => {
     builder
       .addCase(createLobby.fulfilled, (state, action) => {
         if (!action.payload) return
@@ -422,7 +423,7 @@ const serverGameSlice = createSlice({
       .addCase(loadWaitingGames.fulfilled, (state, action) => {
         state.waitingGames = action.payload ?? []
       })
-      .addCase(loadWaitingGames.rejected, state => {
+      .addCase(loadWaitingGames.rejected, (state) => {
         state.waitingGames = []
       })
       .addCase(startRound.fulfilled, (state, action) => {

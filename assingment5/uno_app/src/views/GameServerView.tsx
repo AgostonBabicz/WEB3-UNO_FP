@@ -42,14 +42,9 @@ const GameServerView: React.FC = () => {
   const roundStarted = !!game?.currentRound
   const enoughPlayers = players.length >= 2
 
-  const currentTurn: number | null =
-    game?.currentRound?.playerInTurnIndex ?? null
+  const currentTurn: number | null = game?.currentRound?.playerInTurnIndex ?? null
 
-  const myTurn =
-    roundStarted &&
-    meIndex != null &&
-    currentTurn != null &&
-    currentTurn === meIndex
+  const myTurn = roundStarted && meIndex != null && currentTurn != null && currentTurn === meIndex
 
   const yourHand = myHand
 
@@ -66,7 +61,6 @@ const GameServerView: React.FC = () => {
 
     dispatch(subscribeAll())
     dispatch(refreshMyHand())
-
   }, [])
 
   // navigate to game over when serverGameSlice says so
@@ -126,29 +120,21 @@ const GameServerView: React.FC = () => {
       <div className="bg-swirl"></div>
 
       <div className="turn-banner">
-        {!roundStarted && (
-          <span>Waiting for players… ({players.length}/4)</span>
-        )}
+        {!roundStarted && <span>Waiting for players… ({players.length}/4)</span>}
 
         {roundStarted && (
           <>
             {myTurn ? (
               <span>Your turn</span>
             ) : (
-              <span>
-                Waiting for {players[currentTurn ?? 0]?.name ?? 'someone'}…
-              </span>
+              <span>Waiting for {players[currentTurn ?? 0]?.name ?? 'someone'}…</span>
             )}
           </>
         )}
       </div>
 
       {!roundStarted && (
-        <button
-          className="start-round-btn"
-          disabled={!enoughPlayers}
-          onClick={onStartRoundClick}
-        >
+        <button className="start-round-btn" disabled={!enoughPlayers} onClick={onStartRoundClick}>
           Start Round
         </button>
       )}
@@ -190,27 +176,19 @@ const GameServerView: React.FC = () => {
       <section className="table">
         <div className="pile discard">
           {discardTop && (
-            <UnoCard
-              type={discardTop.type}
-              color={discardTop.color}
-              number={discardTop.number}
-            />
+            <UnoCard type={discardTop.type} color={discardTop.color} number={discardTop.number} />
           )}
         </div>
         <div className="pile draw" onClick={onDraw} title="Draw">
           {roundStarted && <UnoDeck size="md" />}
-          {roundStarted && (
-            <small className="pile-count">{drawPileSize}</small>
-          )}
+          {roundStarted && <small className="pile-count">{drawPileSize}</small>}
         </div>
       </section>
 
       <footer className={`hand${myTurn ? ' playing' : ''}`}>
         <div className="column">
           <span className="name">{players[meIndex ?? 0]?.name}</span>
-          <span className="score">
-            (Score: {players[meIndex ?? 0]?.score ?? 0})
-          </span>
+          <span className="score">(Score: {players[meIndex ?? 0]?.score ?? 0})</span>
         </div>
         <div className="fan">
           {yourHand.map((card: any, ix: number) => (
@@ -221,11 +199,7 @@ const GameServerView: React.FC = () => {
               onClick={() => onPlayCard(ix)}
               title="Play"
             >
-              <UnoCard
-                type={card.type}
-                color={card.color}
-                number={card.number}
-              />
+              <UnoCard type={card.type} color={card.color} number={card.number} />
             </button>
           ))}
         </div>
@@ -234,11 +208,7 @@ const GameServerView: React.FC = () => {
           <button className="btn draw" onClick={onDraw} disabled={!myTurn}>
             Draw
           </button>
-          <button
-            className="btn uno"
-            onClick={onUno}
-            disabled={!roundStarted}
-          >
+          <button className="btn uno" onClick={onUno} disabled={!roundStarted}>
             UNO!
           </button>
         </div>
@@ -247,7 +217,7 @@ const GameServerView: React.FC = () => {
       {showColorPicker !== null && (
         <div className="color-picker-backdrop">
           <div className="color-picker">
-            {['RED', 'YELLOW', 'GREEN', 'BLUE'].map(c => (
+            {['RED', 'YELLOW', 'GREEN', 'BLUE'].map((c) => (
               <button
                 key={c}
                 className="color-chip"

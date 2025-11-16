@@ -1,12 +1,7 @@
 import { Card } from '../types/deck.types'
 import { Round } from '../types/round.types'
 import { Props, Game } from '../types/uno.types'
-import {
-  Randomizer,
-  Shuffler,
-  standardRandomizer,
-  standardShuffler,
-} from '../utils/random_utils'
+import { Randomizer, Shuffler, standardRandomizer, standardShuffler } from '../utils/random_utils'
 import { createRound, winner, score } from './round'
 
 type RoundStep = (r: Round) => Round
@@ -19,21 +14,14 @@ export function createGame(props: Partial<Props>): Game {
   const shuffler: Shuffler<Card> = props.shuffler ?? standardShuffler
 
   if (players.length < 2) throw new Error('A Game requires at least 2 players')
-  if (targetScore <= 0)
-    throw new Error('A Game requires a target score of more than 0')
-  if (cardsPerPlayer <= 0)
-    throw new Error('A Game requires dealing at least 1 card per player')
+  if (targetScore <= 0) throw new Error('A Game requires a target score of more than 0')
+  if (cardsPerPlayer <= 0) throw new Error('A Game requires dealing at least 1 card per player')
 
   const playerCount = players.length
   const scores: ReadonlyArray<number> = Array(playerCount).fill(0)
 
   const dealer = randomizer(playerCount)
-  const currentRound = createRound(
-    [...players],
-    dealer,
-    shuffler,
-    cardsPerPlayer
-  )
+  const currentRound = createRound([...players], dealer, shuffler, cardsPerPlayer)
 
   return {
     playerCount,
@@ -49,8 +37,7 @@ export function createGame(props: Partial<Props>): Game {
 }
 
 export function player(ix: number, g: Game): string {
-  if (ix < 0 || ix >= g.playerCount)
-    throw new Error('Player index is out of bounds')
+  if (ix < 0 || ix >= g.playerCount) throw new Error('Player index is out of bounds')
   return g.players[ix]
 }
 
@@ -80,11 +67,6 @@ export function play(step: RoundStep, g: Game): Game {
 
 export function startNewRound(g: Game): Game {
   const dealer = g.randomizer(g.playerCount)
-  const newRound = createRound(
-    [...g.players],
-    dealer,
-    g.shuffler,
-    g.cardsPerPlayer
-  )
+  const newRound = createRound([...g.players], dealer, g.shuffler, g.cardsPerPlayer)
   return { ...g, currentRound: newRound }
 }

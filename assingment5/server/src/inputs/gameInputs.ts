@@ -8,4 +8,8 @@ export interface GetGameInput {
   id: string
 }
 
-export interface PlayerJoinsGameInput { gameId: string; userId: string; seatIndex: number;}
+export interface PlayerJoinsGameInput {
+  gameId: string
+  userId: string
+  seatIndex: number
+}

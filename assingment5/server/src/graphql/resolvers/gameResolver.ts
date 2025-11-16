@@ -15,7 +15,15 @@ import {
 } from '../../engine'
 import { publishEvent, publishUpdate, pubsub, eventsTopic, updatesTopic } from '../../pubsub'
 import { GameEvent } from '../../types/types'
-import { AddPlayerResolverInput, PlayCardResolverInput, DrawCardResolverInput, SayUnoResolverInput, AccuseUnoResolverInput, StartRoundResolverInput, CreateGameResolverInput } from 'src/types/gameResolversTypes'
+import {
+  AddPlayerResolverInput,
+  PlayCardResolverInput,
+  DrawCardResolverInput,
+  SayUnoResolverInput,
+  AccuseUnoResolverInput,
+  StartRoundResolverInput,
+  CreateGameResolverInput,
+} from 'src/types/gameResolversTypes'
 
 export const gameResolver = {
   UUID: UUIDResolver,

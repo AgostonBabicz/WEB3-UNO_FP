@@ -40,9 +40,7 @@ const LobbiesView: React.FC = () => {
       return
     }
     try {
-      const result = await dispatch(
-        joinLobby({ id: gameId, myName: username })
-      ).unwrap()
+      const result = await dispatch(joinLobby({ id: gameId, myName: username })).unwrap()
 
       const id: string = result.gameId
       await dispatch(subscribeAll())
@@ -92,10 +90,7 @@ const LobbiesView: React.FC = () => {
         )}
 
         {lobbies.length > 0 && (
-          <ul
-            className="selector"
-            style={{ width: '100%', maxWidth: 640, gap: '0.8rem' }}
-          >
+          <ul className="selector" style={{ width: '100%', maxWidth: 640, gap: '0.8rem' }}>
             {lobbies.map((g: any) => (
               <li
                 key={g.id}
@@ -105,9 +100,7 @@ const LobbiesView: React.FC = () => {
                 <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                   <code>{g.id}</code>
                   <span>Players: {g.players?.length ?? 0}/4</span>
-                  {g.targetScore && (
-                    <span className="hint">Target: {g.targetScore}</span>
-                  )}
+                  {g.targetScore && <span className="hint">Target: {g.targetScore}</span>}
                 </div>
                 <button className="chip" onClick={() => joinLobbyHandler(g.id)}>
                   Join

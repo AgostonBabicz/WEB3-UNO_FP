@@ -3,7 +3,6 @@ import authReducer from './authSlice'
 import serverGameReducer from './serverGameSlice'
 import unoGameReducer from './unoGameSlice'
 
-
 export const store = configureStore({
   reducer: {
     auth: authReducer,

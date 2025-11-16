@@ -43,7 +43,13 @@ export class GameRepository implements CRUD<GameRepository> {
   }
 
   // stubs
-  get(): Promise<GameRepository[]> { throw new Error('Not implemented') }
-  update(_: any): Promise<GameRepository> { throw new Error('Not implemented') }
-  delete(_: any): Promise<void> { throw new Error('Not implemented') }
+  get(): Promise<GameRepository[]> {
+    throw new Error('Not implemented')
+  }
+  update(_: any): Promise<GameRepository> {
+    throw new Error('Not implemented')
+  }
+  delete(_: any): Promise<void> {
+    throw new Error('Not implemented')
+  }
 }

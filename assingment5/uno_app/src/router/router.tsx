@@ -1,10 +1,5 @@
 import React from 'react'
-import {
-  BrowserRouter,
-  Routes,
-  Route,
-  useSearchParams,
-} from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useSearchParams, useNavigate } from 'react-router-dom'
 
 import AuthView from '../views/AuthView'
 import GameHomeView from '../views/GameHomeView'
@@ -39,6 +34,7 @@ const GameServerRoute: React.FC = () => {
 }
 
 const GameOverRoute: React.FC = () => {
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const winner = searchParams.get('winner') || 'Unknown'
   return <GameOverView winner={winner} />

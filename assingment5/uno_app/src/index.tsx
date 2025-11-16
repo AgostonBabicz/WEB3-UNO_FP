@@ -4,7 +4,7 @@ import { Provider } from 'react-redux'
 import { store } from './store/store'
 import App from './App'
 
-import { enableMapSet } from 'immer' 
+import { enableMapSet } from 'immer'
 
 enableMapSet()
 
@@ -13,5 +13,5 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <Provider store={store}>
       <App />
     </Provider>
-  </React.StrictMode>
+  </React.StrictMode>,
 )

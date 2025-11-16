@@ -28,16 +28,10 @@ export function is(spec: CardSpec): CardPredicate {
       case 'REVERSE':
       case 'DRAW':
         return (
-          conforms(spec.type, c.type) &&
-          conforms(spec.color, c.color) &&
-          spec.number === undefined
+          conforms(spec.type, c.type) && conforms(spec.color, c.color) && spec.number === undefined
         )
       default:
-        return (
-          conforms(spec.type, c.type) &&
-          spec.color === undefined &&
-          spec.number === undefined
-        )
+        return conforms(spec.type, c.type) && spec.color === undefined && spec.number === undefined
     }
   }
 }

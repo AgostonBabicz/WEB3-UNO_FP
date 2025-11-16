@@ -1,9 +1,8 @@
 import React, { useEffect, useRef } from 'react'
 import '../style/GameOver.css'
-
+import { useNavigate } from 'react-router-dom'
 type GameOverViewProps = {
   winner: string
-  onBackHome?: () => void
 }
 
 type ConfettiParticle = {
@@ -14,11 +13,11 @@ type ConfettiParticle = {
   s: number
 }
 
-const GameOverView: React.FC<GameOverViewProps> = ({ winner, onBackHome }) => {
+const GameOverView: React.FC<GameOverViewProps> = ({ winner }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const confettiRef = useRef<ConfettiParticle[]>([])
   const animRef = useRef<number | null>(null)
-
+  const navigate = useNavigate()
   const initConfetti = () => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -39,7 +38,7 @@ const GameOverView: React.FC<GameOverViewProps> = ({ winner, onBackHome }) => {
   const updateConfetti = () => {
     const canvas = canvasRef.current
     if (!canvas) return
-    confettiRef.current.forEach(p => {
+    confettiRef.current.forEach((p) => {
       p.y += p.s
       if (p.y > canvas.height) {
         p.y = -10
@@ -56,7 +55,7 @@ const GameOverView: React.FC<GameOverViewProps> = ({ winner, onBackHome }) => {
     if (!ctx) return
 
     ctx.clearRect(0, 0, canvas.width, canvas.height)
-    confettiRef.current.forEach(p => {
+    confettiRef.current.forEach((p) => {
       ctx.beginPath()
       ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
       ctx.fillStyle = p.c
@@ -75,7 +74,6 @@ const GameOverView: React.FC<GameOverViewProps> = ({ winner, onBackHome }) => {
       if (animRef.current !== null) cancelAnimationFrame(animRef.current)
       window.removeEventListener('resize', initConfetti)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return (
@@ -90,7 +88,7 @@ const GameOverView: React.FC<GameOverViewProps> = ({ winner, onBackHome }) => {
         <button
           className="btn home-btn"
           onClick={() => {
-            if (onBackHome) onBackHome()
+            navigate('/home')
           }}
         >
           Back to Home

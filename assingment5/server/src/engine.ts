@@ -16,21 +16,14 @@ import {
   play as roundPlay,
   sayUno as roundSayUno,
   catchUnoFailure as roundCatchUnoFailure,
-  hasEnded as roundHasEnded, 
-  canPlay as roundCanPlay
+  hasEnded as roundHasEnded,
+  canPlay as roundCanPlay,
 } from 'src/models/round'
 
-import {
-  discardPile as roundDiscardPile,
-  drawPile as roundDrawPile,
-} from 'src/models/round'
+import { discardPile as roundDiscardPile, drawPile as roundDrawPile } from 'src/models/round'
 
-import {
-  top as deckTop,
-  size as deckSize,
-} from 'src/models/deck'
+import { top as deckTop, size as deckSize } from 'src/models/deck'
 import { persistGameCreate, persistRoundStart } from './helpers/game/persistanceFunctions'
-
 
 export type PublishFn = (evt: any) => void
 
@@ -54,7 +47,7 @@ function toGqlCard(c: Card | undefined | null): GqlCard | null {
 
   return {
     type: c.type as GqlCard['type'],
-    ...(c as any).color ? { color: (c as any).color } : {},
+    ...((c as any).color ? { color: (c as any).color } : {}),
     ...(number ? { number } : {}),
   }
 }
@@ -134,7 +127,6 @@ export async function createGame(
   return view
 }
 
-
 export function addPlayer(gameId: string, name: string, publish: PublishFn) {
   const g = must(gameId)
   if (g.currentRound) throw new Error('Cannot join: round already started')
@@ -160,7 +152,6 @@ export function addPlayer(gameId: string, name: string, publish: PublishFn) {
   return view
 }
 
-
 export function startRound(gameId: string, publish: PublishFn) {
   const g = must(gameId)
   if (g.currentRound) throw new Error('Round already started')
@@ -178,13 +169,11 @@ export function startRound(gameId: string, publish: PublishFn) {
   return view
 }
 
-
 export function waitingGames() {
   return Array.from(GAMES.entries())
     .filter(([_, g]) => !g.currentRound && g.playerCount < 4)
     .map(([id, g]) => gameView(g, id))
 }
-
 
 export function getGame(gameId: string) {
   const g = must(gameId)
@@ -218,7 +207,6 @@ export function resetGame(gameId: string, publish: PublishFn) {
   return view
 }
 
-
 export function hand(gameId: string, playerIndex: number): GqlCard[] {
   const g = must(gameId)
   const r = g.currentRound
@@ -226,8 +214,6 @@ export function hand(gameId: string, playerIndex: number): GqlCard[] {
   const raw = roundGetHand(r, playerIndex) ?? []
   return raw.map(toGqlCard).filter(Boolean) as GqlCard[]
 }
-
-
 
 export function playableIndexes(gameId: string, playerIndex: number): number[] {
   const g = must(gameId)
@@ -237,7 +223,6 @@ export function playableIndexes(gameId: string, playerIndex: number): number[] {
   const hand = roundGetHand(r, playerIndex) ?? []
   return hand.map((_, i) => (roundCanPlay(i, r) ? i : -1)).filter((i) => i >= 0)
 }
-
 
 export function drawCard(gameId: string, playerIndex: number, publish: PublishFn) {
   const g = must(gameId)
@@ -253,7 +238,6 @@ export function drawCard(gameId: string, playerIndex: number, publish: PublishFn
   publish({ __typename: 'GameUpdated', game: view })
   return view
 }
-
 
 export function playCard(
   gameId: string,
@@ -272,56 +256,83 @@ export function playCard(
   )
 
   const rAfter = ng.currentRound
-  if (!rAfter) throw new Error('Round disappeared after play, this should not happen')
 
-  const playedCardModel = deckTop(roundDiscardPile(rAfter))
-  const gqlCard = toGqlCard(playedCardModel)
-  if (!gqlCard) {
-    throw new Error('Could not determine played card')
-  }
+  if (rAfter) {
+    const playedCardModel = deckTop(roundDiscardPile(rAfter))
+    const gqlCard = toGqlCard(playedCardModel)
+    if (!gqlCard) {
+      throw new Error('Could not determine played card')
+    }
 
-  if (gqlCard.type === 'NUMBERED') {
-    const number = gqlCard.number
-    const color = gqlCard.color
-    notify(gameId, 'Numbered card played', `Player ${playerIndex} chose ${color} ${number}`, publish)
-  } else if (gqlCard.type === 'WILD') {
-    const asked = askedColor ?? 'RED'
-    notify(gameId, 'Wild card played', `Player ${playerIndex} chose ${asked}`, publish)
-  } else if (gqlCard.type === 'WILD_DRAW') {
-    const asked = askedColor ?? 'RED'
-    notify(gameId, 'Wild card played', `Player ${playerIndex} chose ${asked}, draw 4 cards`, publish)
-  } else if (gqlCard.type === 'DRAW') {
-    const color = gqlCard.color
-    notify(gameId, `Draw (${color}) card played`, `Player ${playerIndex} made the next player draw 2 cards`, publish)
-  } else if (gqlCard.type === 'REVERSE') {
-    const color = gqlCard.color
-    notify(gameId, `Reverse (${color}) card played`, `Player ${playerIndex} made the round's direction the opposite`, publish)
-  } else {
-    const color = gqlCard.color
-    notify(gameId, `Skip (${color}) card played`, `Player ${playerIndex} skipped the next player in turn`, publish)
+    if (gqlCard.type === 'NUMBERED') {
+      const number = gqlCard.number
+      const color = gqlCard.color
+      notify(
+        gameId,
+        'Numbered card played',
+        `Player ${playerIndex} chose ${color} ${number}`,
+        publish,
+      )
+    } else if (gqlCard.type === 'WILD') {
+      const asked = askedColor ?? 'RED'
+      notify(gameId, 'Wild card played', `Player ${playerIndex} chose ${asked}`, publish)
+    } else if (gqlCard.type === 'WILD_DRAW') {
+      const asked = askedColor ?? 'RED'
+      notify(
+        gameId,
+        'Wild card played',
+        `Player ${playerIndex} chose ${asked}, draw 4 cards`,
+        publish,
+      )
+    } else if (gqlCard.type === 'DRAW') {
+      const color = gqlCard.color
+      notify(
+        gameId,
+        `Draw (${color}) card played`,
+        `Player ${playerIndex} made the next player draw 2 cards`,
+        publish,
+      )
+    } else if (gqlCard.type === 'REVERSE') {
+      const color = gqlCard.color
+      notify(
+        gameId,
+        `Reverse (${color}) card played`,
+        `Player ${playerIndex} made the round's direction the opposite`,
+        publish,
+      )
+    } else {
+      // SKIP
+      const color = gqlCard.color
+      notify(
+        gameId,
+        `Skip (${color}) card played`,
+        `Player ${playerIndex} skipped the next player in turn`,
+        publish,
+      )
+    }
+
+    // Only publish CardPlayed while a round still exists
+    publish({
+      __typename: 'CardPlayed',
+      gameId,
+      playerIndex,
+      card: gqlCard,
+      askedColor: askedColor ?? null,
+    })
   }
 
   const view = gameView(ng, gameId)
 
-  publish({
-    __typename: 'CardPlayed',
-    gameId,
-    playerIndex,
-    card: gqlCard,
-    askedColor: askedColor ?? null,
-  })
+  // GameUpdated is always published, even when the game is over
   publish({ __typename: 'GameUpdated', game: view })
   return view
 }
-
 
 export function sayUno(gameId: string, playerIndex: number, publish: PublishFn) {
   const g = must(gameId)
   if (!g.currentRound) throw new Error('Round not started')
 
-  const ng = updateGameWithRoundStep(gameId, (round) =>
-    roundSayUno(playerIndex, round),
-  )
+  const ng = updateGameWithRoundStep(gameId, (round) => roundSayUno(playerIndex, round))
 
   notify(gameId, `${playerIndex} said uno`, '', publish)
 
@@ -330,7 +341,6 @@ export function sayUno(gameId: string, playerIndex: number, publish: PublishFn) 
   publish({ __typename: 'GameUpdated', game: view })
   return view
 }
-
 
 export function accuseUno(
   gameId: string,
@@ -354,12 +364,7 @@ export function accuseUno(
     success = afterLen > beforeLen
   }
 
-  notify(
-    gameId,
-    `${accuserIndex} accused ${accusedIndex} for not saying uno`,
-    '',
-    publish,
-  )
+  notify(gameId, `${accuserIndex} accused ${accusedIndex} for not saying uno`, '', publish)
 
   const view = gameView(ng, gameId)
   publish({
@@ -373,7 +378,6 @@ export function accuseUno(
   return view
 }
 
-
 // ------------------------ internals ------------------------
 
 function must(gameId: string): Game {
@@ -382,10 +386,7 @@ function must(gameId: string): Game {
   return g
 }
 
-function updateGameWithRoundStep(
-  gameId: string,
-  step: (r: Round) => Round,
-): Game {
+function updateGameWithRoundStep(gameId: string, step: (r: Round) => Round): Game {
   const g = must(gameId)
   if (!g.currentRound) throw new Error('Round not started')
 
@@ -394,7 +395,6 @@ function updateGameWithRoundStep(
   touch(ng)
   return ng
 }
-
 
 function playerCountOf(g: Game): number {
   return g.playerCount
@@ -410,8 +410,7 @@ function gameView(g: Game, id: string) {
   const playerIds = getPlayerIds(g, g.playerCount)
   const round = g.currentRound ?? null
 
-  const handCount = (ix: number) =>
-    round ? roundGetHand(round, ix).length : 0
+  const handCount = (ix: number) => (round ? roundGetHand(round, ix).length : 0)
 
   const saidUno = (_ix: number) => false
 

@@ -8,9 +8,7 @@ export const deterministicShuffle =
   (_) =>
     cards
 
-export function successiveShufflers(
-  ...shufflers: Shuffler<Card>[]
-): Shuffler<Card> {
+export function successiveShufflers(...shufflers: Shuffler<Card>[]): Shuffler<Card> {
   shufflers.reverse()
   let shuffler = shufflers.pop() ?? standardShuffler
   return (cards: readonly Card[]) => {
@@ -22,9 +20,7 @@ export function successiveShufflers(
 
 export const noShuffle: Shuffler<Card> = (cs) => [...cs]
 
-export function constrainedShuffler(
-  ...constraints: [number, CardPredicate][]
-): Shuffler<Card> {
+export function constrainedShuffler(...constraints: [number, CardPredicate][]): Shuffler<Card> {
   return (cards: readonly Card[]) => {
     const cs = [...cards]
     constraints.sort(([a, _], [b, __]) => a - b)
@@ -57,13 +53,10 @@ export type ShuffleBuilder = {
 }
 
 export function shuffleBuilder(
-  {
-    players,
-    cardsPerPlayer: cardsInHand,
-  }: { players: number; cardsPerPlayer: number } = {
+  { players, cardsPerPlayer: cardsInHand }: { players: number; cardsPerPlayer: number } = {
     players: 4,
     cardsPerPlayer: 7,
-  }
+  },
 ): ShuffleBuilder {
   const constraints: Map<number, CardPredicate> = new Map()
   const topOfDiscardPile = players * cardsInHand

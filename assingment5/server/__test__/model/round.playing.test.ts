@@ -50,10 +50,7 @@ describe('Playing a card', () => {
       expect(round.playerHands.get(0)!.size()).toEqual(6)
     })
     it('places the card on the discard pile', () => {
-      const card = round.playerHands
-        .get(round.playerInTurn!)
-        ?.getPlayerHand()
-        .get(0)
+      const card = round.playerHands.get(round.playerInTurn!)?.getPlayerHand().get(0)
       round = play(0, undefined, round)
       expect(topOfDiscard(round)).toEqual(card)
     })
@@ -385,10 +382,7 @@ describe('Drawing a card', () => {
       expect(round.playerHands.get(0)!.size()).toEqual(8)
     })
     it('adds the top of the draw pile to the end of the hand', () => {
-      const shuffler = builder
-        .drawPile()
-        .is({ type: 'DRAW', color: 'GREEN' })
-        .build()
+      const shuffler = builder.drawPile().is({ type: 'DRAW', color: 'GREEN' }).build()
       let round = createRound({
         players: ['a', 'b', 'c', 'd'],
         dealer: 3,
@@ -396,16 +390,11 @@ describe('Drawing a card', () => {
       })
       round = draw(round)
       expect(
-        is({ type: 'DRAW', color: 'GREEN' })(
-          round.playerHands.get(0)!.getPlayerHand().get(7)
-        )
+        is({ type: 'DRAW', color: 'GREEN' })(round.playerHands.get(0)!.getPlayerHand().get(7)),
       ).toBeTruthy()
     })
     it('moves to the next player if the card is unplayable', () => {
-      const shuffler = builder
-        .drawPile()
-        .is({ type: 'DRAW', color: 'GREEN' })
-        .build()
+      const shuffler = builder.drawPile().is({ type: 'DRAW', color: 'GREEN' }).build()
       let round = createRound({
         players: ['a', 'b', 'c', 'd'],
         dealer: 3,
@@ -415,10 +404,7 @@ describe('Drawing a card', () => {
       expect(round.playerInTurn).toBe(1)
     })
     it("doesn't move to the next player if the card is unplayable", () => {
-      const shuffler = builder
-        .drawPile()
-        .is({ type: 'DRAW', color: 'BLUE' })
-        .build()
+      const shuffler = builder.drawPile().is({ type: 'DRAW', color: 'BLUE' }).build()
       let round = createRound({
         players: ['a', 'b', 'c', 'd'],
         dealer: 3,
@@ -449,10 +435,7 @@ describe('Drawing a card', () => {
       const cards = firstShuffler(createInitialDeck().toArray()).slice(0, 7)
       let round: Round = undefined as any
       beforeEach(() => {
-        const shuffler = successiveShufflers(
-          deterministicShuffler(cards),
-          standardShuffler
-        )
+        const shuffler = successiveShufflers(deterministicShuffler(cards), standardShuffler)
         round = createRound({
           players: ['a', 'b', 'c', 'd'],
           dealer: 3,
@@ -480,10 +463,7 @@ describe('Drawing a card', () => {
       })
       it('proceeds with shuffling to create a new draw pile', () => {
         const mockShuffler = jest.fn(noShuffle)
-        const shuffler = successiveShufflers(
-          deterministicShuffler(cards),
-          mockShuffler
-        )
+        const shuffler = successiveShufflers(deterministicShuffler(cards), mockShuffler)
         let round = createRound({
           players: ['a', 'b', 'c', 'd'],
           dealer: 3,
@@ -538,10 +518,7 @@ describe('Drawing a card', () => {
       .is({ type: 'REVERSE', color: 'YELLOW' })
       .build()
     const cards = shuffler1(createInitialDeck().toArray()).slice(0, 8)
-    const shuffler = successiveShufflers(
-      deterministicShuffler(cards),
-      standardShuffler
-    )
+    const shuffler = successiveShufflers(deterministicShuffler(cards), standardShuffler)
     let round = createRound({
       players: ['a', 'b', 'c', 'd'],
       dealer: 3,
@@ -553,9 +530,7 @@ describe('Drawing a card', () => {
       round = play(1, undefined, round)
       round = draw(round)
       expect(round.playerInTurn).toBe(1)
-      expect(round.playerHands.get(1)!.getPlayerHand().get(1)!.type).toEqual(
-        'DRAW'
-      )
+      expect(round.playerHands.get(1)!.getPlayerHand().get(1)!.type).toEqual('DRAW')
       expect(round.drawDeck.length).toEqual(1)
       round = play(1, undefined, round)
       expect(round.playerHands.get(2)!.size()).toEqual(3)

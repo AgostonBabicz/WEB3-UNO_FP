@@ -1,4 +1,4 @@
-import { Color } from "./types"
+import { Color } from './types'
 
 export type CreateGameResolverInput = {
   players: string[]

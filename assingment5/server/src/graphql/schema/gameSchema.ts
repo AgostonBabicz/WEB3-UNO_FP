@@ -135,8 +135,7 @@ export const gameSchema = gql`
     title: String!
     message: String!
     at: DateTime!
-  } 
-
+  }
 
   union GameEvent =
     | PlayerJoined

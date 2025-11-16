@@ -12,11 +12,7 @@ import {
   canPlayAny,
   score,
 } from '../../src/models/round'
-import {
-  deterministicShuffle,
-  shuffleBuilder,
-  successiveShufflers,
-} from '../utils/shuffling'
+import { deterministicShuffle, shuffleBuilder, successiveShufflers } from '../utils/shuffling'
 import * as _ from 'lodash'
 import { standardShuffler } from '../../src/utils/random_utils'
 import { Round } from '../../src/types/round.types'
@@ -31,41 +27,23 @@ describe('catching failure to say "UNO!"', () => {
     .is({ type: 'NUMBERED', color: 'RED', number: 3 })
     .is({ type: 'NUMBERED', color: 'RED', number: 5 })
     .hand(0)
-    .is(
-      { type: 'NUMBERED', color: 'BLUE', number: 8 },
-      { type: 'SKIP', color: 'BLUE' }
-    )
+    .is({ type: 'NUMBERED', color: 'BLUE', number: 8 }, { type: 'SKIP', color: 'BLUE' })
     .hand(1)
-    .is(
-      { type: 'NUMBERED', color: 'RED', number: 8 },
-      { type: 'SKIP', color: 'GREEN' }
-    )
+    .is({ type: 'NUMBERED', color: 'RED', number: 8 }, { type: 'SKIP', color: 'GREEN' })
     .hand(2)
-    .is(
-      { type: 'NUMBERED', color: 'GREEN', number: 8 },
-      { type: 'DRAW', color: 'RED' }
-    )
+    .is({ type: 'NUMBERED', color: 'GREEN', number: 8 }, { type: 'DRAW', color: 'RED' })
     .hand(3)
-    .is(
-      { type: 'NUMBERED', color: 'RED', number: 4 },
-      { type: 'REVERSE', color: 'RED' }
-    )
+    .is({ type: 'NUMBERED', color: 'RED', number: 4 }, { type: 'REVERSE', color: 'RED' })
 
   describe('single UNO scenario', () => {
     const shuffler = builder.build()
-    const round: Round = _.flow([
-      draw,
-      _.partial(play, 2, undefined),
-      draw,
-      draw,
-      draw,
-    ])(
+    const round: Round = _.flow([draw, _.partial(play, 2, undefined), draw, draw, draw])(
       createRound({
         players: ['a', 'b', 'c', 'd'],
         dealer: 3,
         shuffler,
         cardsPerPlayer: 2,
-      })
+      }),
     )
     test('set up is as expected', () => {
       expect(round.playerHands.get(0)?.size()).toEqual(2)
@@ -102,10 +80,7 @@ describe('catching failure to say "UNO!"', () => {
       expect(checkUnoFailure({ accuser: 2, accused: 0 }, res)).toBeTruthy()
     })
     it('fails if the next player has already played', () => {
-      const res = _.flow([
-        _.partial(play, 0, undefined),
-        _.partial(play, 0, undefined),
-      ])(round)
+      const res = _.flow([_.partial(play, 0, undefined), _.partial(play, 0, undefined)])(round)
       expect(checkUnoFailure({ accuser: 3, accused: 0 }, res)).toBeFalsy()
     })
     it('fails if the next player has drawn a card', () => {
@@ -125,15 +100,11 @@ describe('catching failure to say "UNO!"', () => {
       expect(checkUnoFailure({ accuser: 2, accused: 0 }, res)).toBeTruthy()
     })
     it("fails if the accused has said 'UNO!' before playing", () => {
-      const res = _.flow([_.partial(sayUno, 0), _.partial(play, 0, undefined)])(
-        round
-      )
+      const res = _.flow([_.partial(sayUno, 0), _.partial(play, 0, undefined)])(round)
       expect(checkUnoFailure({ accuser: 2, accused: 0 }, res)).toBeFalsy()
     })
     it("fails if the accused has said 'UNO!' after playing but before the accusation", () => {
-      const res = _.flow([_.partial(play, 0, undefined), _.partial(sayUno, 0)])(
-        round
-      )
+      const res = _.flow([_.partial(play, 0, undefined), _.partial(sayUno, 0)])(round)
       expect(checkUnoFailure({ accuser: 2, accused: 0 }, res)).toBeFalsy()
     })
     it("still succeeds if the player has said 'UNO!' before another players turn", () => {
@@ -151,7 +122,7 @@ describe('catching failure to say "UNO!"', () => {
           dealer: 3,
           shuffler,
           cardsPerPlayer: 2,
-        })
+        }),
       )
       expect(checkUnoFailure({ accuser: 1, accused: 0 }, round)).toBeTruthy()
     })
@@ -160,10 +131,7 @@ describe('catching failure to say "UNO!"', () => {
   describe('emptying the draw pile', () => {
     builder
       .hand(3)
-      .is(
-        { type: 'NUMBERED', color: 'BLUE', number: 4 },
-        { type: 'REVERSE', color: 'RED' }
-      )
+      .is({ type: 'NUMBERED', color: 'BLUE', number: 4 }, { type: 'REVERSE', color: 'RED' })
     const shuffler = builder.build()
     const cards = shuffler(createInitialDeck().toArray()).slice(0, 14)
     const round: Round = _.flow([
@@ -177,12 +145,9 @@ describe('catching failure to say "UNO!"', () => {
       createRound({
         players: ['a', 'b', 'c', 'd'],
         dealer: 3,
-        shuffler: successiveShufflers(
-          deterministicShuffle(cards),
-          standardShuffler
-        ),
+        shuffler: successiveShufflers(deterministicShuffle(cards), standardShuffler),
         cardsPerPlayer: 2,
-      })
+      }),
     )
     test('set up is as expected', () => {
       expect(round.playerHands.get(0)?.size()).toEqual(2)
@@ -209,10 +174,7 @@ describe('catching failure to say "UNO!"', () => {
   describe('Multi UNO scenario', () => {
     builder
       .hand(3)
-      .is(
-        { type: 'NUMBERED', color: 'BLUE', number: 4 },
-        { type: 'REVERSE', color: 'RED' }
-      )
+      .is({ type: 'NUMBERED', color: 'BLUE', number: 4 }, { type: 'REVERSE', color: 'RED' })
     const shuffler = builder.build()
     const cards = shuffler(createInitialDeck().toArray()).slice(0, 14)
     const round = _.flow([draw, _.partial(play, 2, undefined), draw, draw])(
@@ -221,7 +183,7 @@ describe('catching failure to say "UNO!"', () => {
         dealer: 3,
         shuffler: deterministicShuffle(cards),
         cardsPerPlayer: 2,
-      })
+      }),
     )
     test('set up is as expected', () => {
       expect(round.playerHands.get(0)?.size()).toEqual(2)
@@ -270,12 +232,8 @@ describe('catching failure to say "UNO!"', () => {
       cardsPerPlayer: 2,
     })
     test('accused cannot be negative', () => {
-      expect(() =>
-        checkUnoFailure({ accused: -1, accuser: 0 }, round)
-      ).toThrow()
-      expect(() =>
-        catchUnoFailure({ accused: -1, accuser: 0 }, round)
-      ).toThrow()
+      expect(() => checkUnoFailure({ accused: -1, accuser: 0 }, round)).toThrow()
+      expect(() => catchUnoFailure({ accused: -1, accuser: 0 }, round)).toThrow()
     })
     test('accused cannot be beyond the player count', () => {
       expect(() => checkUnoFailure({ accused: 4, accuser: 0 }, round)).toThrow()
@@ -331,7 +289,7 @@ describe('ending the round', () => {
         dealer: 3,
         shuffler,
         cardsPerPlayer: 1,
-      })
+      }),
     )
     it('returns true from hasEnded()', () => {
       expect(hasEnded(round)).toBeTruthy()
@@ -385,7 +343,7 @@ describe('score', () => {
         dealer: 1,
         shuffler,
         cardsPerPlayer: 1,
-      })
+      }),
     )
     expect(score(round)).toBeDefined()
   })
@@ -401,7 +359,7 @@ describe('score', () => {
           dealer: 1,
           shuffler,
           cardsPerPlayer: 1,
-        })
+        }),
       )
       expect(score(round)).toEqual(number)
     }
@@ -417,7 +375,7 @@ describe('score', () => {
         dealer: 1,
         shuffler,
         cardsPerPlayer: 1,
-      })
+      }),
     )
     expect(score(round)).toEqual(20)
   })
@@ -432,7 +390,7 @@ describe('score', () => {
         dealer: 1,
         shuffler,
         cardsPerPlayer: 1,
-      })
+      }),
     )
     expect(score(round)).toEqual(20)
   })
@@ -447,7 +405,7 @@ describe('score', () => {
         dealer: 1,
         shuffler,
         cardsPerPlayer: 1,
-      })
+      }),
     )
     expect(score(round)).toEqual(20)
   })
@@ -462,7 +420,7 @@ describe('score', () => {
         dealer: 1,
         shuffler,
         cardsPerPlayer: 1,
-      })
+      }),
     )
     expect(score(round)).toEqual(50)
   })
@@ -477,7 +435,7 @@ describe('score', () => {
         dealer: 1,
         shuffler,
         cardsPerPlayer: 1,
-      })
+      }),
     )
     expect(score(round)).toEqual(50)
   })
@@ -494,7 +452,7 @@ describe('score', () => {
         dealer: 1,
         shuffler,
         cardsPerPlayer: 1,
-      })
+      }),
     )
     expect(round.playerHands.get(1)?.size()).toEqual(3)
     expect(score(round)).toEqual(75)
@@ -522,7 +480,7 @@ describe('score', () => {
         dealer: 3,
         shuffler,
         cardsPerPlayer: 1,
-      })
+      }),
     )
     expect(score(round)).toEqual(85)
   })

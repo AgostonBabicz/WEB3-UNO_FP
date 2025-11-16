@@ -24,9 +24,7 @@ export function finishRoundIfAny(
 
   persistRoundFinish(rt, winnerIndex)
 
-
   publish({ __typename: 'RoundEnded', gameId: rt.g.id, winnerIndex, pointsAwarded, scores })
-
 
   if (rt.g.winnerIndex !== null) {
     publish({ __typename: 'GameEnded', gameId: rt.g.id, winnerIndex: rt.g.winnerIndex, scores })

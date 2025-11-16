@@ -24,12 +24,11 @@ type Opts = {
 
 type UnoGameState = {
   opts: Opts | null
-  game: Game | null | any   
+  game: Game | null | any
   showPopUpMessage: boolean
   popUpMessage: string | null
   popUpTitle: string | null
 }
-
 
 const initialState: UnoGameState = {
   opts: null,
@@ -82,139 +81,133 @@ function chooseWildColor(state: UnoGameState, r: Round, ix: number): Color {
   return best
 }
 
+export const botTakeTurn = createAsyncThunk<boolean, void, { state: RootState }>(
+  'unoGame/botTakeTurn',
+  async (_, { getState, dispatch }) => {
+    const root = getState()
+    const slice = root.unoGame
+    const g = slice.game as Game | null
+    const r = g?.currentRound as Round | undefined
 
-export const botTakeTurn = createAsyncThunk<
-  boolean,
-  void,
-  { state: RootState }
->('unoGame/botTakeTurn', async (_, { getState, dispatch }) => {
-  const root = getState()
-  const slice = root.unoGame
-  const g = slice.game as Game | null
-  const r = g?.currentRound as Round | undefined
+    if (!g || !r) return false
+    if (g.winner !== undefined) return false
 
-  if (!g || !r) return false
-  if (g.winner !== undefined) return false
+    const ix = currentPlayerIndex(r)
+    if (ix == null || !isBot(slice, ix)) return false
 
-  const ix = currentPlayerIndex(r)
-  if (ix == null || !isBot(slice, ix)) return false
+    await new Promise((res) => setTimeout(res, randomDelay()))
 
-  await new Promise(res => setTimeout(res, randomDelay()))
+    let s2 = (getState() as RootState).unoGame
+    let g2 = s2.game as Game | null
+    let r2 = g2?.currentRound as Round | undefined
 
-  let s2 = (getState() as RootState).unoGame
-  let g2 = s2.game as Game | null
-  let r2 = g2?.currentRound as Round | undefined
+    if (!g2 || !r2) return false
+    if (g2.winner !== undefined) return false
 
-  if (!g2 || !r2) return false
-  if (g2.winner !== undefined) return false
+    const currentIx = currentPlayerIndex(r2)
+    if (currentIx !== ix || !isBot(s2, currentIx)) return false
 
-  const currentIx = currentPlayerIndex(r2)
-  if (currentIx !== ix || !isBot(s2, currentIx)) return false
+    const opts = s2.opts
 
-  const opts = s2.opts
+    if (opts) {
+      for (let t = 0; t < opts.players.length; t++) {
+        if (t === ix) continue
+        if (checkUnoFailure({ accuser: ix, accused: t }, r2)) {
+          dispatch(
+            accuse({
+              accuser: ix,
+              accused: t,
+            }),
+          )
+          dispatch(
+            setMessage({
+              title: 'You are accused!',
+              message: `${opts.players[ix]} accuses ${opts.players[t]} of not saying UNO! Now Draw 4`,
+            }),
+          )
+          break
+        }
+      }
+    }
 
-  if (opts) {
-    for (let t = 0; t < opts.players.length; t++) {
-      if (t === ix) continue
-      if (checkUnoFailure({ accuser: ix, accused: t }, r2)) {
-        dispatch(
-          accuse({
-            accuser: ix,
-            accused: t,
-          })
-        )
-        dispatch(
-          setMessage({
-            title: 'You are accused!',
-            message: `${opts.players[ix]} accuses ${opts.players[t]} of not saying UNO! Now Draw 4`,
-          })
-        )
+    const hand = handOfRound(r2, ix)
+    let played = false
+
+    for (let i = 0; i < hand.length; i++) {
+      if (roundCanPlay(i, r2)) {
+        const card = hand[i]
+        if (card.type === 'WILD' || card.type === 'WILD_DRAW') {
+          const color = chooseWildColor(s2, r2, ix)
+          dispatch(
+            setMessage({
+              title: 'Bot plays',
+              message: `Bot ${opts?.players[ix]} plays ${card.type} and chooses ${color}`,
+            }),
+          )
+          dispatch(playCard({ cardIx: i, askedColor: color }))
+        } else {
+          dispatch(playCard({ cardIx: i }))
+        }
+        played = true
         break
       }
     }
-  }
 
-  const hand = handOfRound(r2, ix)
-  let played = false
-
-  for (let i = 0; i < hand.length; i++) {
-    if (roundCanPlay(i, r2)) {
-      const card = hand[i]
-      if (card.type === 'WILD' || card.type === 'WILD_DRAW') {
-        const color = chooseWildColor(s2, r2, ix)
-        dispatch(
-          setMessage({
-            title: 'Bot plays',
-            message: `Bot ${opts?.players[ix]} plays ${card.type} and chooses ${color}`,
-          })
-        )
-        dispatch(playCard({ cardIx: i, askedColor: color }))
-      } else {
-        dispatch(playCard({ cardIx: i }))
-      }
-      played = true
-      break
+    if (!played) {
+      dispatch(draw())
     }
-  }
 
-  if (!played) {
-    dispatch(draw())
-  }
+    // maybe say UNO
+    s2 = (getState() as RootState).unoGame
+    g2 = s2.game as Game | null
+    r2 = g2?.currentRound as Round | undefined
+    if (!g2 || !r2 || g2.winner !== undefined) return true
 
-  // maybe say UNO
-  s2 = (getState() as RootState).unoGame
-  g2 = s2.game as Game | null
-  r2 = g2?.currentRound as Round | undefined
-  if (!g2 || !r2 || g2.winner !== undefined) return true
+    const handAfter = handOfRound(r2, ix)
+    if (handAfter.length === 1 && Math.random() > 0.5) {
+      dispatch(
+        setMessage({
+          title: 'Bot says UNO!',
+          message: `Bot ${s2.opts?.players[ix]} says UNO!`,
+        }),
+      )
+      dispatch(sayUno(ix))
+    }
 
-  const handAfter = handOfRound(r2, ix)
-  if (handAfter.length === 1 && Math.random() > 0.5) {
-    dispatch(
-      setMessage({
-        title: 'Bot says UNO!',
-        message: `Bot ${s2.opts?.players[ix]} says UNO!`,
-      })
-    )
-    dispatch(sayUno(ix))
-  }
-
-  return true
-})
-
+    return true
+  },
+)
 
 const unoGameSlice = createSlice({
   name: 'unoGame',
   initialState,
   reducers: {
     init(state, action: PayloadAction<Opts>) {
-  const opts = action.payload
-  state.opts = opts
-  state.game = createGame({
-    players: opts.players,
-    targetScore: opts.targetScore,
-    cardsPerPlayer: opts.cardsPerPlayer,
-  }) as any
-  state.showPopUpMessage = false
-  state.popUpMessage = null
-  state.popUpTitle = null
-},
+      const opts = action.payload
+      state.opts = opts
+      state.game = createGame({
+        players: opts.players,
+        targetScore: opts.targetScore,
+        cardsPerPlayer: opts.cardsPerPlayer,
+      }) as any
+      state.showPopUpMessage = false
+      state.popUpMessage = null
+      state.popUpTitle = null
+    },
     reset(state) {
-  const opts = state.opts
-  if (!opts) return
-  state.game = createGame({
-    players: opts.players,
-    targetScore: opts.targetScore,
-    cardsPerPlayer: opts.cardsPerPlayer,
-  }) as any
-  state.showPopUpMessage = false
-  state.popUpMessage = null
-  state.popUpTitle = null
-},
+      const opts = state.opts
+      if (!opts) return
+      state.game = createGame({
+        players: opts.players,
+        targetScore: opts.targetScore,
+        cardsPerPlayer: opts.cardsPerPlayer,
+      }) as any
+      state.showPopUpMessage = false
+      state.popUpMessage = null
+      state.popUpTitle = null
+    },
 
-    setMessage(
-      state,
-      action: PayloadAction<{ title: string; message: string }>
-    ) {
+    setMessage(state, action: PayloadAction<{ title: string; message: string }>) {
       state.popUpTitle = action.payload.title
       state.popUpMessage = action.payload.message
       state.showPopUpMessage = true
@@ -224,53 +217,37 @@ const unoGameSlice = createSlice({
       state.popUpMessage = null
       state.popUpTitle = null
     },
-    playCard(
-  state,
-  action: PayloadAction<{ cardIx: number; askedColor?: Color }>
-) {
-  if (!state.game || !state.game.currentRound) return
-  const { cardIx, askedColor } = action.payload
-  const step = (r: Round) => play(cardIx, askedColor, r)
-  state.game = gamePlay(step, state.game as Game) as any
-},
+    playCard(state, action: PayloadAction<{ cardIx: number; askedColor?: Color }>) {
+      if (!state.game || !state.game.currentRound) return
+      const { cardIx, askedColor } = action.payload
+      const step = (r: Round) => play(cardIx, askedColor, r)
+      state.game = gamePlay(step, state.game as Game) as any
+    },
 
     draw(state) {
-  if (!state.game || !state.game.currentRound) return
-  const step = (r: Round) => roundDraw(r)
-  state.game = gamePlay(step, state.game as Game) as any
-},
+      if (!state.game || !state.game.currentRound) return
+      const step = (r: Round) => roundDraw(r)
+      state.game = gamePlay(step, state.game as Game) as any
+    },
 
     sayUno(state, action: PayloadAction<number>) {
-  if (!state.game || !state.game.currentRound) return
-  const playerIx = action.payload
-  const step = (r: Round) => roundSayUno(playerIx, r)
-  state.game = gamePlay(step, state.game as Game) as any
-},
+      if (!state.game || !state.game.currentRound) return
+      const playerIx = action.payload
+      const step = (r: Round) => roundSayUno(playerIx, r)
+      state.game = gamePlay(step, state.game as Game) as any
+    },
 
-accuse(
-  state,
-  action: PayloadAction<{ accuser: number; accused: number }>
-) {
-  if (!state.game || !state.game.currentRound) return
-  const { accuser, accused } = action.payload
-  const step = (r: Round) =>
-    catchUnoFailure({ accuser, accused }, r)
-  state.game = gamePlay(step, state.game as Game) as any
-},
-
+    accuse(state, action: PayloadAction<{ accuser: number; accused: number }>) {
+      if (!state.game || !state.game.currentRound) return
+      const { accuser, accused } = action.payload
+      const step = (r: Round) => catchUnoFailure({ accuser, accused }, r)
+      state.game = gamePlay(step, state.game as Game) as any
+    },
   },
 })
 
-export const {
-  init,
-  reset,
-  setMessage,
-  clearMessage,
-  playCard,
-  draw,
-  sayUno,
-  accuse,
-} = unoGameSlice.actions
+export const { init, reset, setMessage, clearMessage, playCard, draw, sayUno, accuse } =
+  unoGameSlice.actions
 
 export const selectUnoGame = (state: RootState) => state.unoGame
 

@@ -21,7 +21,6 @@ export class RoundRepository implements CRUD<RoundRepository> {
     this.startedAt = row.started_at
     this.endedAt = row.ended_at ?? null
   }
- 
 
   async getOne(input: GetRoundInput): Promise<RoundRepository> {
     const rows = await query(sql`
@@ -54,11 +53,16 @@ export class RoundRepository implements CRUD<RoundRepository> {
     return this.getOne({ id: rows[0].id })
   }
 
-
- create(input: any): Promise<RoundRepository> {
+  create(input: any): Promise<RoundRepository> {
     throw new Error('Method not implemented.')
   }
-  get(): Promise<RoundRepository[]> { throw new Error('Not implemented') }
-  update(_: any): Promise<RoundRepository> { throw new Error('Not implemented') }
-  delete(_: any): Promise<void> { throw new Error('Not implemented') }
+  get(): Promise<RoundRepository[]> {
+    throw new Error('Not implemented')
+  }
+  update(_: any): Promise<RoundRepository> {
+    throw new Error('Not implemented')
+  }
+  delete(_: any): Promise<void> {
+    throw new Error('Not implemented')
+  }
 }

@@ -39,9 +39,7 @@ describe('Game set up', () => {
     expect(() => createGame({ players: ['a'] })).toThrow()
   })
   it('requires a target score of more than 0', () => {
-    expect(() =>
-      createGame({ players: ['a', 'b', 'c', 'd'], targetScore: 0 })
-    ).toThrow()
+    expect(() => createGame({ players: ['a', 'b', 'c', 'd'], targetScore: 0 })).toThrow()
   })
   it('starts a round', () => {
     expect(game.currentRound).toBeDefined()
@@ -93,10 +91,7 @@ describe('Playing a round', () => {
     })
   })
   describe('when the round is over', () => {
-    const game = play(
-      _.flow([Round.draw, _.partial(Round.play, 0, undefined)]),
-      startGame
-    )
+    const game = play(_.flow([Round.draw, _.partial(Round.play, 0, undefined)]), startGame)
     test('the game still has no winner', () => {
       expect(game.winner).toBeUndefined()
     })
@@ -133,14 +128,8 @@ describe('ending the second round', () => {
     cardsPerPlayer: 1,
   }
   const startGame = createGame(props)
-  const game1 = play(
-    _.flow([Round.draw, _.partial(Round.play, 0, undefined)]),
-    startGame
-  )
-  const game2 = play(
-    _.flow([Round.draw, _.partial(Round.play, 0, undefined)]),
-    game1
-  )
+  const game1 = play(_.flow([Round.draw, _.partial(Round.play, 0, undefined)]), startGame)
+  const game2 = play(_.flow([Round.draw, _.partial(Round.play, 0, undefined)]), game1)
 
   test('the game still has no winner', () => {
     expect(game2.winner).toBeUndefined()
@@ -177,14 +166,8 @@ describe('ending the third round', () => {
     cardsPerPlayer: 1,
   }
   const startGame = createGame(props)
-  const game1 = play(
-    _.flow([Round.draw, _.partial(Round.play, 0, undefined)]),
-    startGame
-  )
-  const game2 = play(
-    _.flow([Round.draw, _.partial(Round.play, 0, undefined)]),
-    game1
-  )
+  const game1 = play(_.flow([Round.draw, _.partial(Round.play, 0, undefined)]), startGame)
+  const game2 = play(_.flow([Round.draw, _.partial(Round.play, 0, undefined)]), game1)
   const game3 = play(_.partial(Round.play, 0, undefined), game2)
 
   test('the game still has no winner', () => {
@@ -207,14 +190,8 @@ describe('ending the fourth round', () => {
     cardsPerPlayer: 1,
   }
   const startGame = createGame(props)
-  const game1 = play(
-    _.flow([Round.draw, _.partial(Round.play, 0, undefined)]),
-    startGame
-  )
-  const game2 = play(
-    _.flow([Round.draw, _.partial(Round.play, 0, undefined)]),
-    game1
-  )
+  const game1 = play(_.flow([Round.draw, _.partial(Round.play, 0, undefined)]), startGame)
+  const game2 = play(_.flow([Round.draw, _.partial(Round.play, 0, undefined)]), game1)
   const game3 = play(_.partial(Round.play, 0, undefined), game2)
 
   const game4 = play(_.partial(Round.play, 0, undefined), game3)

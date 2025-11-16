@@ -28,9 +28,7 @@ import {
   toArray as handToArray,
 } from './player_hand'
 
-function withHandView(
-  h: PlayerHand
-): PlayerHand & { size(): number; getPlayerHand(): List<Card> } {
+function withHandView(h: PlayerHand): PlayerHand & { size(): number; getPlayerHand(): List<Card> } {
   const anyHand = h as PlayerHand & {
     size?: () => number
     getPlayerHand?: () => List<Card>
@@ -54,9 +52,7 @@ function withHandView(
   return anyHand as PlayerHand & { size(): number; getPlayerHand(): List<Card> }
 }
 
-function withDeckView<C extends Card>(
-  d: Deck<C>
-): Deck<C> & { readonly length: number } {
+function withDeckView<C extends Card>(d: Deck<C>): Deck<C> & { readonly length: number } {
   const out = d as Deck<C> & { readonly length: number }
   if (!('length' in out)) {
     Object.defineProperty(out, 'length', {
@@ -79,15 +75,9 @@ function setPlayerHand(s: Round, p: number, h: PlayerHand): Round {
     playerHands: s.playerHands.update(p, () => withHandView(h)),
   })
 }
-function updatePlayerHand(
-  s: Round,
-  p: number,
-  updater: (h: PlayerHand) => PlayerHand
-): Round {
+function updatePlayerHand(s: Round, p: number, updater: (h: PlayerHand) => PlayerHand): Round {
   return withState(s, {
-    playerHands: s.playerHands.update(p, h =>
-      withHandView(updater(h ?? createHand()))
-    ),
+    playerHands: s.playerHands.update(p, (h) => withHandView(updater(h ?? createHand()))),
   })
 }
 
@@ -95,7 +85,7 @@ export function createRound(
   players: ReadonlyArray<string>,
   dealer: number,
   shuffler: Shuffler<Card>,
-  cardsPerPlay: number
+  cardsPerPlay: number,
 ): Round {
   const initialState = makeRoundState(players, dealer, shuffler, cardsPerPlay)
   return resolveStart(initialState)
@@ -109,7 +99,7 @@ function makeRoundState(
   players: ReadonlyArray<string>,
   dealer: number,
   shuffler: Shuffler<Card>,
-  cardsPerPlay: number
+  cardsPerPlay: number,
 ): Round {
   if (players.length < 2) throw new Error('A Round requires at least 2 players')
   if (players.length > 10) throw new Error('A Round allows at most 10 players')
@@ -117,7 +107,7 @@ function makeRoundState(
   let drawDeck = withDeckView(deckShuffle(createInitialDeck(), shuffler))
   let discardDeck = withDeckView(createEmptyDeck<Card>())
   let playerHands = List<PlayerHand>(
-    Array.from({ length: players.length }, () => withHandView(createHand()))
+    Array.from({ length: players.length }, () => withHandView(createHand())),
   )
 
   for (let p = 0; p < players.length; p++) {
@@ -125,7 +115,7 @@ function makeRoundState(
       const [c, nd] = deckDeal(drawDeck)
       if (!c) throw new Error('Not enough cards')
       drawDeck = withDeckView(nd)
-      playerHands = playerHands.update(p, h => withHandView(handAdd(h!, c)))
+      playerHands = playerHands.update(p, (h) => withHandView(handAdd(h!, c)))
     }
   }
 
@@ -227,12 +217,12 @@ function drawTo(s: Round, p: number, n = 1): [void, Round] {
 
       state = setDiscardDeck(
         state,
-        top ? deckPutTop(createEmptyDeck<Card>(), top) : createEmptyDeck<Card>()
+        top ? deckPutTop(createEmptyDeck<Card>(), top) : createEmptyDeck<Card>(),
       )
     }
 
     state = setDrawDeck(state, nd)
-    state = updatePlayerHand(state, p, h => handAdd(h, card!))
+    state = updatePlayerHand(state, p, (h) => handAdd(h, card!))
   }
 
   return [undefined, state]
@@ -314,13 +304,11 @@ export function canPlay(cardIx: number, state: Round): boolean {
       // must NOT have a card of the effective color
       if (!effectiveColor) {
         // no known color, be strict: only allow if hand has zero colored cards
-        const hasAnyColored = handToArray(state.playerHands.get(p)!).some(
-          isColored
-        )
+        const hasAnyColored = handToArray(state.playerHands.get(p)!).some(isColored)
         return !hasAnyColored
       }
       const hasColor = handToArray(state.playerHands.get(p)!).some(
-        c => isColored(c) && c.color === effectiveColor
+        (c) => isColored(c) && c.color === effectiveColor,
       )
       return !hasColor
     }
@@ -328,14 +316,9 @@ export function canPlay(cardIx: number, state: Round): boolean {
   return false
 }
 
-export function play(
-  cardIx: number,
-  askedColor: Color | undefined,
-  state: Round
-): Round {
+export function play(cardIx: number, askedColor: Color | undefined, state: Round): Round {
   let s = ensureUnoState(state)
-  if (winner(s) !== undefined)
-    throw new Error('Cannot play after having a winner')
+  if (winner(s) !== undefined) throw new Error('Cannot play after having a winner')
 
   const p = s.playerInTurn
   if (p === undefined) throw new Error("It's not any player's turn")
@@ -362,16 +345,12 @@ export function play(
     throw new Error('Illegal play: Cannot ask for color on a colored card')
   }
   if (!askedColor && wild) {
-    throw new Error(
-      'Illegal play: Must choose a color when playing a wild card'
-    )
+    throw new Error('Illegal play: Must choose a color when playing a wild card')
   }
 
   if (!canPlay(cardIx, s)) {
     const top = deckTop(s.discardDeck)
-    throw new Error(
-      `Illegal play:\n${JSON.stringify(playedCard)}\n${JSON.stringify(top)}`
-    )
+    throw new Error(`Illegal play:\n${JSON.stringify(playedCard)}\n${JSON.stringify(top)}`)
   }
 
   if (handSizeNow === 2) {
@@ -383,13 +362,13 @@ export function play(
   }
 
   // remove from hand
-  s = updatePlayerHand(s, p, h => handRemove(h, playedCard))
+  s = updatePlayerHand(s, p, (h) => handRemove(h, playedCard))
   s = withState(s, { resolving: true })
 
   // push to discard and set color
   s = setDiscardDeck(s, deckPutTop(s.discardDeck, playedCard))
   s = withState(s, {
-    currentColor: isColored(playedCard) ? playedCard.color : askedColor ?? '',
+    currentColor: isColored(playedCard) ? playedCard.color : (askedColor ?? ''),
   })
 
   // Apply effects and advance
@@ -480,28 +459,23 @@ export function draw(state: Round): Round {
     const reshuffled = s.shuffler ? deckShuffle(underTop, s.shuffler) : underTop
     ;[card, rest] = deckDeal(reshuffled)
 
-    s = setDiscardDeck(
-      s,
-      top ? deckPutTop(createEmptyDeck<Card>(), top) : createEmptyDeck<Card>()
-    )
+    s = setDiscardDeck(s, top ? deckPutTop(createEmptyDeck<Card>(), top) : createEmptyDeck<Card>())
 
     if (!card) throw new Error('No cards left to draw')
   }
 
   s = setDrawDeck(s, rest)
-  s = updatePlayerHand(s, p, h => handAdd(h, card!))
+  s = updatePlayerHand(s, p, (h) => handAdd(h, card!))
   s = withState(s, { resolving: true, lastActor: p })
 
   if (deckSize(s.drawDeck) === 0) {
     const top = deckTop(s.discardDeck)
     const underTop = deckUnderTop(s.discardDeck)
     if (deckSize(underTop) > 0) {
-      const reshuffled = s.shuffler
-        ? deckShuffle(underTop, s.shuffler)
-        : underTop
+      const reshuffled = s.shuffler ? deckShuffle(underTop, s.shuffler) : underTop
       s = setDiscardDeck(
         s,
-        top ? deckPutTop(createEmptyDeck<Card>(), top) : createEmptyDeck<Card>()
+        top ? deckPutTop(createEmptyDeck<Card>(), top) : createEmptyDeck<Card>(),
       )
       s = setDrawDeck(s, reshuffled)
     }
@@ -539,7 +513,7 @@ export function winner(state: Round): number | undefined {
 }
 
 export function hasEnded(state: Round): boolean {
-  return state.playerHands.some(h => withHandView(h).size() === 0)
+  return state.playerHands.some((h) => withHandView(h).size() === 0)
 }
 
 export function score(state: Round): number | undefined {
@@ -594,7 +568,7 @@ export function sayUno(playerIx: number, state: Round): Round {
 
 export function catchUnoFailure(
   { accuser, accused }: { accuser: number; accused: number },
-  state: Round
+  state: Round,
 ): Round {
   if (!checkUnoFailure({ accuser, accused }, state)) {
     return state
@@ -610,14 +584,12 @@ export function catchUnoFailure(
 
 export function checkUnoFailure(
   { accuser, accused }: { accuser: number; accused: number },
-  state: Round
+  state: Round,
 ): boolean {
   if (accused < 0) throw new Error('Accused cannot be negative')
-  if (accused >= state.playerCount)
-    throw new Error('Accused cannot be beyond the player count')
+  if (accused >= state.playerCount) throw new Error('Accused cannot be beyond the player count')
 
-  if (state.pendingUnoAccused !== accused || state.pendingUnoAccused === null)
-    return false
+  if (state.pendingUnoAccused !== accused || state.pendingUnoAccused === null) return false
   if (state.unoProtectedForWindow) return false
   if (state.playerHands.get(accused)!.size() !== 1) return false
 

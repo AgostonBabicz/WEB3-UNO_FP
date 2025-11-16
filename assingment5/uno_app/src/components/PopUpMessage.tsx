@@ -7,12 +7,7 @@ type PopUpMessageProps = {
   onClose: () => void
 }
 
-export const PopUpMessage: React.FC<PopUpMessageProps> = ({
-  show,
-  title,
-  message,
-  onClose,
-}) => {
+export const PopUpMessage: React.FC<PopUpMessageProps> = ({ show, title, message, onClose }) => {
   if (!show) return null
 
   return (
@@ -20,7 +15,7 @@ export const PopUpMessage: React.FC<PopUpMessageProps> = ({
       className="pop-up-message-backdrop"
       role="dialog"
       aria-modal="true"
-      onClick={e => {
+      onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
     >

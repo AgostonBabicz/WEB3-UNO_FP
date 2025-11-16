@@ -3,11 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import '../style/GameHome.css'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { selectIsAuthed, selectUsername } from '../store/authSlice'
-import {
-  createLobby,
-  subscribeAll,
-  refreshMyHand,
-} from '../store/serverGameSlice'
+import { createLobby, subscribeAll, refreshMyHand } from '../store/serverGameSlice'
 
 const GameHomeView: React.FC = () => {
   const dispatch = useAppDispatch()
@@ -23,7 +19,7 @@ const GameHomeView: React.FC = () => {
 
   const increaseBotCounter = () => {
     if (botCounter < 3) {
-      setBotCounter(prev => prev + 1)
+      setBotCounter((prev) => prev + 1)
       setError('')
     } else {
       setError('The maximum number of bots is 3')
@@ -32,7 +28,7 @@ const GameHomeView: React.FC = () => {
 
   const decreaseBotCounter = () => {
     if (botCounter > 1) {
-      setBotCounter(prev => prev - 1)
+      setBotCounter((prev) => prev - 1)
       setError('')
     } else {
       setError('The minimum number of bots is 1')
@@ -50,7 +46,7 @@ const GameHomeView: React.FC = () => {
       `/game?botNumber=${botCounter}` +
         `&playerName=${encodeURIComponent(name)}` +
         `&cardsPerPlayer=${cardsPerPlayer}` +
-        `&targetScore=${targetScore}`
+        `&targetScore=${targetScore}`,
     )
   }
 
@@ -66,7 +62,7 @@ const GameHomeView: React.FC = () => {
           meName: username,
           targetScore,
           cardsPerPlayer,
-        })
+        }),
       ).unwrap()
 
       // result has { gameId, meIndex, game }
@@ -117,7 +113,7 @@ const GameHomeView: React.FC = () => {
                 min={5}
                 max={10}
                 value={cardsPerPlayer}
-                onChange={e => setCardsPerPlayer(Number(e.target.value) || 0)}
+                onChange={(e) => setCardsPerPlayer(Number(e.target.value) || 0)}
               />
               <p className="hint">Default is 7 cards</p>
             </div>
@@ -134,7 +130,7 @@ const GameHomeView: React.FC = () => {
                 max={1000}
                 step={50}
                 value={targetScore}
-                onChange={e => setTargetScore(Number(e.target.value) || 0)}
+                onChange={(e) => setTargetScore(Number(e.target.value) || 0)}
               />
               <p className="hint">Default is 500 points</p>
             </div>

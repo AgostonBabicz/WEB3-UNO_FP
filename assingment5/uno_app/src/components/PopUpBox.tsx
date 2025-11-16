@@ -8,13 +8,7 @@ type Props = {
   onClose: () => void
 }
 
-export const PopUpBox: React.FC<Props> = ({
-  show,
-  title,
-  message,
-  timeoutMs,
-  onClose
-}) => {
+export const PopUpBox: React.FC<Props> = ({ show, title, message, timeoutMs, onClose }) => {
   useEffect(() => {
     if (!show || !timeoutMs) return
     const id = window.setTimeout(onClose, timeoutMs)

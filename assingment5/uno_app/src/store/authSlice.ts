@@ -25,7 +25,7 @@ export const login = createAsyncThunk(
   'auth/login',
   async ({ username, password }: LoginPayload, { rejectWithValue }) => {
     try {
-      const { data } = await apollo.mutate<{login: any}>({
+      const { data } = await apollo.mutate<{ login: any }>({
         mutation: LOGIN,
         variables: { input: { username, password } },
       })
@@ -35,14 +35,14 @@ export const login = createAsyncThunk(
     } catch (err: any) {
       return rejectWithValue(err?.message ?? 'Login failed')
     }
-  }
+  },
 )
 
 export const register = createAsyncThunk(
   'auth/register',
   async ({ username, password }: LoginPayload, { rejectWithValue }) => {
     try {
-      const { data } = await apollo.mutate<{createUser:any}>({
+      const { data } = await apollo.mutate<{ createUser: any }>({
         mutation: REGISTER,
         variables: { input: { username, password } },
       })
@@ -52,7 +52,7 @@ export const register = createAsyncThunk(
     } catch (err: any) {
       return rejectWithValue(err?.message ?? 'Register failed')
     }
-  }
+  },
 )
 
 const authSlice = createSlice({
@@ -72,9 +72,9 @@ const authSlice = createSlice({
       state.error = null
     },
   },
-  extraReducers: builder => {
+  extraReducers: (builder) => {
     builder
-      .addCase(login.pending, state => {
+      .addCase(login.pending, (state) => {
         state.status = 'loading'
         state.error = null
       })
@@ -91,7 +91,7 @@ const authSlice = createSlice({
         state.status = 'failed'
         state.error = (action.payload as string) ?? 'Login failed'
       })
-      .addCase(register.pending, state => {
+      .addCase(register.pending, (state) => {
         state.status = 'loading'
         state.error = null
       })

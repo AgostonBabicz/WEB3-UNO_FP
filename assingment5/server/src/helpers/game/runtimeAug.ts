@@ -1,4 +1,4 @@
-import { GameRuntime, RuntimeAug } from "../../types/types"
+import { GameRuntime, RuntimeAug } from '../../types/types'
 
 export function ensureAug(rt: GameRuntime): RuntimeAug {
   const anyRt = rt as any

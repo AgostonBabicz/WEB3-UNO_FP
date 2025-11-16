@@ -25,6 +25,7 @@ import {
 import { UnoCard } from '../components/UnoCard'
 import { UnoDeck } from '../components/UnoDeck'
 import { PopUpBox } from '../components/PopUpBox'
+import { useNavigate } from 'react-router-dom'
 
 type GameViewProps = {
   botNumber: number
@@ -43,12 +44,10 @@ const GameView: React.FC<GameViewProps> = ({
 }) => {
   const dispatch = useAppDispatch()
   const uno = useAppSelector(selectUnoGame)
+  const navigate = useNavigate()
 
   const botNames = useMemo(() => ['Bot A', 'Bot B', 'Bot C'], [])
-  const botCount = useMemo(
-    () => Math.min(Math.max(botNumber || 1, 1), 3),
-    [botNumber]
-  )
+  const botCount = useMemo(() => Math.min(Math.max(botNumber || 1, 1), 3), [botNumber])
   const bots = useMemo(() => botNames.slice(0, botCount), [botNames, botCount])
   const me = playerName || 'You'
   const players = useMemo(() => [...bots, me], [bots, me])
@@ -64,35 +63,27 @@ const GameView: React.FC<GameViewProps> = ({
         players,
         targetScore,
         cardsPerPlayer,
-      })
+      }),
     )
   }, [dispatch, players, targetScore, cardsPerPlayer])
 
   const game = uno.game as Game | null
   const round = (game?.currentRound ?? null) as Round | null
 
-  const playerInTurn = round
-    ? round.playerInTurn ?? round.currentPlayerIndex
-    : undefined
+  const playerInTurn = round ? (round.playerInTurn ?? round.currentPlayerIndex) : undefined
 
   const roundEnded = round ? roundHasEnded(round) : false
   const isGameOver = game?.winner !== undefined
 
   const myTurn = playerInTurn === meIx && !roundEnded && !isGameOver
 
-  const handOf = useCallback(
-    (ix: number) => (round ? getHand(round, ix) : []),
-    [round]
-  )
+  const handOf = useCallback((ix: number) => (round ? getHand(round, ix) : []), [round])
 
   const myHand = handOf(meIx)
   const drawPileSize = round ? drawPile(round).length : 0
   const discardTop = round ? topOfDiscard(round) : undefined
 
-  const botIndices = useMemo(
-    () => bots.map((_, bi) => bi),
-    [bots]
-  )
+  const botIndices = useMemo(() => bots.map((_, bi) => bi), [bots])
 
   const [showColorPicker, setShowColorPicker] = useState<number | null>(null)
 
@@ -147,6 +138,12 @@ const GameView: React.FC<GameViewProps> = ({
     dispatch(botTakeTurn())
   }, [dispatch, round, game, playerInTurn, roundEnded, isGameOver, meIx])
 
+  useEffect(() => {
+    if (!isGameOver) return
+
+    navigate('/game-over?winner=' + encodeURIComponent(game?.winner || 'Unknown'))
+  }, [isGameOver, game, players])
+
   return (
     <main className={`play uno-theme ${myTurn ? '' : 'waiting'}`}>
       <div className="target-score">Target: {targetScore}</div>
@@ -156,27 +153,20 @@ const GameView: React.FC<GameViewProps> = ({
         {myTurn ? (
           <span>Your turn</span>
         ) : (
-          <span>
-            {playerInTurn != null
-              ? `Waiting for ${players[playerInTurn]}…`
-              : 'Waiting…'}
-          </span>
+          <span>{playerInTurn != null ? `Waiting for ${players[playerInTurn]}…` : 'Waiting…'}</span>
         )}
       </div>
 
       <header className="row opponents">
         {bots.map((botName, bi) => {
           const pIx = botIndices[bi]
-          const score =
-            game && Array.isArray(game.scores) ? game.scores[pIx] ?? 0 : 0
+          const score = game && Array.isArray(game.scores) ? (game.scores[pIx] ?? 0) : 0
           const count = handOf(pIx).length
 
           return (
             <div
               key={botName}
-              className={`opponent ${
-                playerInTurn === pIx ? 'playing' : ''
-              }`}
+              className={`opponent ${playerInTurn === pIx ? 'playing' : ''}`}
               onClick={() => handleAccuse(pIx)}
               title="Click to accuse this player"
             >
@@ -209,11 +199,7 @@ const GameView: React.FC<GameViewProps> = ({
                   ? (discardTop as any).color
                   : undefined
               }
-              number={
-                discardTop.type === 'NUMBERED'
-                  ? (discardTop as any).number
-                  : undefined
-              }
+              number={discardTop.type === 'NUMBERED' ? (discardTop as any).number : undefined}
             />
           )}
         </div>
@@ -227,8 +213,7 @@ const GameView: React.FC<GameViewProps> = ({
         <div className="column">
           <span className="name">{players[meIx]}</span>
           <span className="score">
-            (Score:{' '}
-            {game && Array.isArray(game.scores) ? game.scores[meIx] ?? 0 : 0})
+            (Score: {game && Array.isArray(game.scores) ? (game.scores[meIx] ?? 0) : 0})
           </span>
         </div>
 
@@ -251,11 +236,7 @@ const GameView: React.FC<GameViewProps> = ({
                     ? (card as any).color
                     : undefined
                 }
-                number={
-                  card.type === 'NUMBERED'
-                    ? (card as any).number
-                    : undefined
-                }
+                number={card.type === 'NUMBERED' ? (card as any).number : undefined}
               />
             </button>
           ))}
@@ -274,7 +255,7 @@ const GameView: React.FC<GameViewProps> = ({
       {showColorPicker !== null && (
         <div className="color-picker-backdrop">
           <div className="color-picker">
-            {COLORS.map(c => (
+            {COLORS.map((c) => (
               <button
                 key={c}
                 className="color-chip"
