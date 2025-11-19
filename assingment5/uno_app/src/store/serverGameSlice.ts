@@ -17,7 +17,7 @@ import {
 } from '../graphql/ops'
 import type { RootState } from './store'
 import { selectAuth } from './authSlice'
-import { Color } from '../types/deck.types'
+import { Color } from '@uno/domain'
 
 type GameState = any
 

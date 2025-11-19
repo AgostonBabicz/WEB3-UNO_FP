@@ -1,8 +1,7 @@
-import { Card } from 'src/types/deck.types'
-import type { Game } from 'src/types/uno.types'
+import { Card, Game } from '@uno/domain'
 import { GameRepository } from '../../repository/gameRepository'
 import { RoundRepository } from '../../repository/roundRepository'
-import { getHand as roundGetHand } from 'src/models/round'
+import { roundGetHand } from '@uno/domain'
 
 // Minimal DTOs so we never import the old GameRuntime again
 export type PersistScoreRow = {

@@ -1,4 +1,4 @@
-import { Color } from './types'
+import { Color } from './deck'
 
 export type CreateGameResolverInput = {
   players: string[]

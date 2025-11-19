@@ -18,7 +18,7 @@ import {
   accuse as accuseThunk,
   resetGameOver,
 } from '../store/serverGameSlice'
-import { Color } from '../types/deck.types'
+import { Color } from '@uno/domain'
 import { PopUpMessage } from '../components/PopUpMessage'
 import { UnoCard } from '../components/UnoCard'
 import { UnoDeck } from '../components/UnoDeck'

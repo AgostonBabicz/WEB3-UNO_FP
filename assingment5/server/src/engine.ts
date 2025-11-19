@@ -1,28 +1,23 @@
 import { v4 as uuid } from 'uuid'
 
-import type { Game } from 'src/types/uno.types'
-import type { Card, Color } from 'src/types/deck.types'
-import type { Round } from 'src/types/round.types'
 
+import type { Game, Round, Card, Color } from '@uno/domain'
 import {
-  createGame as createModelGame,
-  play as applyRoundStep,
-  startNewRound as startNewRoundModel,
-} from 'src/models/uno'
-
-import {
-  getHand as roundGetHand,
-  draw as roundDraw,
-  play as roundPlay,
-  sayUno as roundSayUno,
-  catchUnoFailure as roundCatchUnoFailure,
-  hasEnded as roundHasEnded,
-  canPlay as roundCanPlay,
-} from 'src/models/round'
-
-import { discardPile as roundDiscardPile, drawPile as roundDrawPile } from 'src/models/round'
-
-import { top as deckTop, size as deckSize } from 'src/models/deck'
+  createModelGame,
+  applyRoundStep,
+  startNewRoundModel,
+  roundGetHand,
+  roundDraw,
+  roundPlay,
+  roundSayUno,
+  roundCatchUnoFailure,
+  roundHasEnded,
+  roundCanPlay,
+  roundDiscardPile,
+  roundDrawPile,
+  deckTop,
+  deckSize
+} from '@uno/domain'
 import { persistGameCreate, persistRoundStart } from './helpers/game/persistanceFunctions'
 
 export type PublishFn = (evt: any) => void

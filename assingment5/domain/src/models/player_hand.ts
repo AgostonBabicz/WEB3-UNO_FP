@@ -1,6 +1,12 @@
 import { List } from 'immutable'
-import { Card } from '../types/deck.types'
-import { PlayerHand } from '../types/player_hand.types'
+import { Card } from './deck'
+
+
+export type PlayerHand = Readonly<{
+  cards: List<Card>
+  size(): number
+  getPlayerHand(): List<Card>
+}>
 
 const make = (cards: List<Card>): PlayerHand => {
   const obj = { cards } as PlayerHand

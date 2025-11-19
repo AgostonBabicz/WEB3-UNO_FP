@@ -1,11 +1,27 @@
-import { Card } from '../types/deck.types'
-import { Round } from '../types/round.types'
-import { Props, Game } from '../types/uno.types'
+import { Card } from './deck'
 import { Randomizer, Shuffler, standardRandomizer, standardShuffler } from '../utils/random_utils'
-import { createRound, winner, score } from './round'
+import { Round,createRound, winner, score } from './round'
 
 type RoundStep = (r: Round) => Round
+export type Game = Readonly<{
+  playerCount: number
+  targetScore: number
+  players: ReadonlyArray<string>
+  scores: ReadonlyArray<number>
+  currentRound: Round | undefined
+  randomizer: Randomizer
+  shuffler: Shuffler<Card>
+  cardsPerPlayer: number
+  winner: number | undefined
+}>
 
+export type Props = {
+  players: string[]
+  targetScore: number
+  cardsPerPlayer: number
+  randomizer: Randomizer
+  shuffler: Shuffler<Card>
+}
 export function createGame(props: Partial<Props>): Game {
   const players = props.players ?? ['A', 'B']
   const targetScore = props.targetScore ?? 500
@@ -26,7 +42,7 @@ export function createGame(props: Partial<Props>): Game {
     targetScore,
     players,
     scores,
-    currentRound: null,
+    currentRound: undefined,
     randomizer,
     shuffler,
     cardsPerPlayer,

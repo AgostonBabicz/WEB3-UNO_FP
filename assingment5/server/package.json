@@ -26,6 +26,7 @@
     "@babel/preset-typescript": "^7.28.5",
     "@types/immutable": "^3.8.6",
     "@types/lodash": "^4.17.20",
+    "@uno/domain": "file:../domain/dist",
     "babel-jest": "^30.2.0",
     "bcrypt": "^6.0.0",
     "body-parser": "^2.2.0",

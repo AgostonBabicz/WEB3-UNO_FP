@@ -1,12 +1,12 @@
 import { List } from 'immutable'
-import { Card, Color, Deck } from '../types/deck.types'
-import { PlayerHand } from '../types/player_hand.types'
-import { Round, Direction } from '../types/round.types'
 import { mod } from '../utils/mod'
 import { Shuffler } from '../utils/random_utils'
 import { withState } from '../utils/updater'
 
 import {
+  Card,
+  Color,
+  Deck,
   createInitialDeck,
   createEmptyDeck,
   isWild,
@@ -22,11 +22,38 @@ import {
 } from './deck'
 
 import {
+  PlayerHand,
   createHand,
   add as handAdd,
   remove as handRemove,
   toArray as handToArray,
 } from './player_hand'
+
+export type Direction = 1 | -1
+
+export type Round = Readonly<{
+  playerCount: number
+  players: ReadonlyArray<string>
+  currentPlayerIndex: number
+  discardDeck: Deck
+  drawDeck: Deck
+  playerHands: List<PlayerHand>
+  dealer: number
+  shuffler?: Shuffler<Card>
+  cardsPerPlay?: number
+  startResolved: boolean
+  currentDirection: 'clockwise' | 'counterclockwise'
+  direction: Direction
+  currentColor: '' | Color
+  resolving: boolean
+  lastActor: number | null
+  lastUnoSayer: number | null
+  pendingUnoAccused: number | null
+  unoProtectedForWindow: boolean
+  unoSayersSinceLastAction: Set<number>
+  playerInTurn: number | undefined
+  scored?: boolean
+}>
 
 function withHandView(h: PlayerHand): PlayerHand & { size(): number; getPlayerHand(): List<Card> } {
   const anyHand = h as PlayerHand & {
@@ -101,9 +128,6 @@ function makeRoundState(
   shuffler: Shuffler<Card>,
   cardsPerPlay: number,
 ): Round {
-  if (players.length < 2) throw new Error('A Round requires at least 2 players')
-  if (players.length > 10) throw new Error('A Round allows at most 10 players')
-
   let drawDeck = withDeckView(deckShuffle(createInitialDeck(), shuffler))
   let discardDeck = withDeckView(createEmptyDeck<Card>())
   let playerHands = List<PlayerHand>(
@@ -156,7 +180,7 @@ function makeRoundState(
     lastUnoSayer: null,
     pendingUnoAccused: null,
     unoProtectedForWindow: false,
-    unoSayersSinceLastAction: [],
+    unoSayersSinceLastAction: new Set<number>(),
     playerInTurn: dealer,
   }
 }
@@ -212,7 +236,7 @@ function drawTo(s: Round, p: number, n = 1): [void, Round] {
 
       let reshuffled = createDeckWithCards(under)
       if (state.shuffler) reshuffled = deckShuffle(reshuffled, state.shuffler)
-      ;[card, nd] = deckDeal(reshuffled)
+        ;[card, nd] = deckDeal(reshuffled)
       if (!card) throw new Error('No cards left to draw')
 
       state = setDiscardDeck(
@@ -278,13 +302,9 @@ export function canPlay(cardIx: number, state: Round): boolean {
     switch (top!.type) {
       case 'NUMBERED':
         if (played.type === 'NUMBERED') {
-          const sameNumber =
-            played.type === 'NUMBERED' &&
-            isColored(top!) &&
-            top!.type === 'NUMBERED' &&
-            played.number === top!.number
-
-          return played.color === effectiveColor || sameNumber
+          const topIsNumbered = top!.type === 'NUMBERED'
+          const numbersMatch = topIsNumbered && played.number === (top as any).number
+          return played.color === effectiveColor || numbersMatch
         }
         return played.color === effectiveColor
       case 'SKIP':
@@ -301,9 +321,7 @@ export function canPlay(cardIx: number, state: Round): boolean {
     if (played.type === 'WILD') return true
 
     if (played.type === 'WILD_DRAW') {
-      // must NOT have a card of the effective color
       if (!effectiveColor) {
-        // no known color, be strict: only allow if hand has zero colored cards
         const hasAnyColored = handToArray(state.playerHands.get(p)!).some(isColored)
         return !hasAnyColored
       }
@@ -356,7 +374,7 @@ export function play(cardIx: number, askedColor: Color | undefined, state: Round
   if (handSizeNow === 2) {
     s = withState(s, {
       pendingUnoAccused: p,
-      unoProtectedForWindow: s.unoSayersSinceLastAction.includes(p),
+      unoProtectedForWindow: s.unoSayersSinceLastAction.has(p),
       lastUnoSayer: null,
     })
   }
@@ -416,7 +434,7 @@ export function play(cardIx: number, askedColor: Color | undefined, state: Round
   s = withState(s, {
     lastActor: p,
     resolving: false,
-    unoSayersSinceLastAction: [],
+    unoSayersSinceLastAction: new Set<number>(),
   })
 
   const w = winner(s)
@@ -425,7 +443,7 @@ export function play(cardIx: number, askedColor: Color | undefined, state: Round
       playerInTurn: undefined,
       currentPlayerIndex: -1 as unknown as number,
       resolving: false,
-      unoSayersSinceLastAction: [],
+      unoSayersSinceLastAction: new Set<number>(),
       scored: false,
     })
   }
@@ -449,7 +467,7 @@ export function draw(state: Round): Round {
 
   let card: Card | undefined
   let rest: Deck<Card>
-  ;[card, rest] = deckDeal(s.drawDeck)
+    ;[card, rest] = deckDeal(s.drawDeck)
 
   if (!card) {
     const top = deckTop(s.discardDeck)
@@ -457,7 +475,7 @@ export function draw(state: Round): Round {
     if (deckSize(underTop) === 0) throw new Error('No cards left to draw')
 
     const reshuffled = s.shuffler ? deckShuffle(underTop, s.shuffler) : underTop
-    ;[card, rest] = deckDeal(reshuffled)
+      ;[card, rest] = deckDeal(reshuffled)
 
     s = setDiscardDeck(s, top ? deckPutTop(createEmptyDeck<Card>(), top) : createEmptyDeck<Card>())
 
@@ -488,7 +506,7 @@ export function draw(state: Round): Round {
 
   s = withState(s, {
     resolving: false,
-    unoSayersSinceLastAction: [],
+    unoSayersSinceLastAction: new Set<number>(),
   })
 
   return s
@@ -500,7 +518,7 @@ function ensureUnoState(state: Round): Round {
     unoProtectedForWindow: state.unoProtectedForWindow ?? false,
     lastUnoSayer: state.lastUnoSayer ?? null,
     lastActor: state.lastActor ?? null,
-    unoSayersSinceLastAction: state.unoSayersSinceLastAction ?? [],
+    unoSayersSinceLastAction: state.unoSayersSinceLastAction ?? new Set<number>(),
   })
 }
 
@@ -550,19 +568,14 @@ export function sayUno(playerIx: number, state: Round): Round {
   if (playerIx < 0 || playerIx >= s.playerCount) {
     throw new Error('Player index out of bounds')
   }
-
-  const prev = s.unoSayersSinceLastAction
-  const updated = prev.includes(playerIx) ? prev : [...prev, playerIx]
-
+  const oldSayers = Array.from(s.unoSayersSinceLastAction)
   s = withState(s, {
     lastUnoSayer: playerIx,
-    unoSayersSinceLastAction: updated,
+    unoSayersSinceLastAction: new Set<number>([...oldSayers, playerIx]),
   })
-
   if (s.pendingUnoAccused === playerIx) {
     s = withState(s, { unoProtectedForWindow: true })
   }
-
   return s
 }
 

@@ -11,17 +11,15 @@ import {
   selectUnoGame,
 } from '../store/unoGameSlice'
 
-import type { Game } from '../types/uno.types'
-import type { Round } from '../types/round.types'
-import type { Color } from '../types/deck.types'
+import type { Game,Round,Color } from '@uno/domain'
 
 import {
-  getHand,
-  topOfDiscard,
-  drawPile,
-  hasEnded as roundHasEnded,
-  canPlay as roundCanPlay,
-} from '../models/round'
+  roundGetHand,
+  roundTopOfDiscard,
+  roundDrawPile,
+  roundHasEnded,
+  roundCanPlay,
+} from '@uno/domain'
 import { UnoCard } from '../components/UnoCard'
 import { UnoDeck } from '../components/UnoDeck'
 import { PopUpBox } from '../components/PopUpBox'
@@ -77,12 +75,11 @@ const GameView: React.FC<GameViewProps> = ({
 
   const myTurn = playerInTurn === meIx && !roundEnded && !isGameOver
 
-  const handOf = useCallback((ix: number) => (round ? getHand(round, ix) : []), [round])
+  const handOf = useCallback((ix: number) => (round ? roundGetHand(round, ix) : []), [round])
 
   const myHand = handOf(meIx)
-  const drawPileSize = round ? drawPile(round).length : 0
-  const discardTop = round ? topOfDiscard(round) : undefined
-
+  const drawPileSize = round ? roundDrawPile(round).size : 0
+  const discardTop = round ? roundTopOfDiscard(round) : undefined
   const botIndices = useMemo(() => bots.map((_, bi) => bi), [bots])
 
   const [showColorPicker, setShowColorPicker] = useState<number | null>(null)
@@ -93,7 +90,7 @@ const GameView: React.FC<GameViewProps> = ({
     if (!myTurn || !round) return
     if (!roundCanPlay(ix, round)) return
 
-    const hand = getHand(round, meIx)
+    const hand = roundGetHand(round, meIx)
     const card = hand[ix]
     if (!card) return
 

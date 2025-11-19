@@ -11,11 +11,11 @@ import {
   winner,
   canPlayAny,
   score,
-} from '../../src/models/round'
+} from '@uno/domain'
 import { deterministicShuffle, shuffleBuilder, successiveShufflers } from '../utils/shuffling'
 import * as _ from 'lodash'
-import { standardShuffler } from '../../src/utils/random_utils'
-import { Round } from '../../src/types/round.types'
+import { standardShuffler } from '@uno/domain'
+import { Round } from '@uno/domain'
 
 describe('catching failure to say "UNO!"', () => {
   const builder = shuffleBuilder({ players: 4, cardsPerPlayer: 2 })

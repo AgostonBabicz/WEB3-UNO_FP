@@ -1,19 +1,17 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit'
 import type { RootState } from './store'
 
-import { createGame, play as gamePlay } from '../models/uno'
+import { createGame, gamePlay } from '@uno/domain'
 import {
-  draw as roundDraw,
-  sayUno as roundSayUno,
-  getHand,
-  canPlay as roundCanPlay,
+  roundDraw,
+  roundSayUno,
+  roundGetHand,
+  roundCanPlay,
   checkUnoFailure,
   catchUnoFailure,
-  play,
-} from '../models/round'
-import { Game } from '../types/uno.types'
-import { Round } from '../types/round.types'
-import { Card, Color } from '../types/deck.types'
+  roundPlay,
+} from '@uno/domain'
+import { Game,Card, Color, Round  } from '@uno/domain'
 import { randomDelay } from '../utils/randomDelay'
 
 type Opts = {
@@ -56,7 +54,7 @@ function isBot(state: UnoGameState, ix: number): boolean {
 }
 
 function handOfRound(r: Round, ix: number): readonly Card[] {
-  return getHand(r, ix)
+  return roundGetHand(r, ix)
 }
 
 function chooseWildColor(state: UnoGameState, r: Round, ix: number): Color {
@@ -220,7 +218,7 @@ const unoGameSlice = createSlice({
     playCard(state, action: PayloadAction<{ cardIx: number; askedColor?: Color }>) {
       if (!state.game || !state.game.currentRound) return
       const { cardIx, askedColor } = action.payload
-      const step = (r: Round) => play(cardIx, askedColor, r)
+      const step = (r: Round) => roundPlay(cardIx, askedColor, r)
       state.game = gamePlay(step, state.game as Game) as any
     },
 

@@ -14,7 +14,7 @@ import {
   resetGame,
 } from '../../engine'
 import { publishEvent, publishUpdate, pubsub, eventsTopic, updatesTopic } from '../../pubsub'
-import { GameEvent } from '../../types/types'
+import { GameEvent } from '@uno/domain'
 import {
   AddPlayerResolverInput,
   PlayCardResolverInput,
@@ -23,7 +23,7 @@ import {
   AccuseUnoResolverInput,
   StartRoundResolverInput,
   CreateGameResolverInput,
-} from 'src/types/gameResolversTypes'
+} from '@uno/domain'
 
 export const gameResolver = {
   UUID: UUIDResolver,

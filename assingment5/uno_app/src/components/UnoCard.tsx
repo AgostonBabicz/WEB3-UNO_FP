@@ -1,6 +1,6 @@
 import React from 'react'
 import '../style/Card.css'
-import { CardNumber, Color, Type } from '../types/deck.types'
+import { CardNumber, Color, Type } from '@uno/domain'
 
 type UnoCardProps = {
   type: Type
