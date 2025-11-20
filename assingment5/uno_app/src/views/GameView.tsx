@@ -1,15 +1,10 @@
 import React, { useEffect, useMemo, useRef, useCallback, useState } from 'react'
-import { useAppDispatch, useAppSelector } from '../store/hooks'
+import { useAppDispatch, useAppSelector } from '../stores/hooks'
 import {
   init,
-  playCard as playCardAction,
-  draw as drawAction,
-  sayUno as sayUnoAction,
-  botTakeTurn,
   clearMessage,
-  accuse as accuseAction,
   selectUnoGame,
-} from '../store/unoGameSlice'
+} from '../slices/unoGameSlice'
 
 import type { Game,Round,Color } from '@uno/domain'
 
@@ -24,6 +19,12 @@ import { UnoCard } from '../components/UnoCard'
 import { UnoDeck } from '../components/UnoDeck'
 import { PopUpBox } from '../components/PopUpBox'
 import { useNavigate } from 'react-router-dom'
+import PlayCardThunk from '../thunks/PlayCardThunk'
+import DrawCardThunk from '../thunks/DrawCardThunk'
+import SayUnoThunk from '../thunks/SayUnoThunk'
+import AccuseThunk from '../thunks/AccuseThunk'
+import BotTakeTurn from '../thunks/BotTurnThunk'
+
 
 type GameViewProps = {
   botNumber: number
@@ -99,27 +100,27 @@ const GameView: React.FC<GameViewProps> = ({
       return
     }
 
-    dispatch(playCardAction({ cardIx: ix }))
+    dispatch(PlayCardThunk({ cardIndex : ix }))
   }
 
   const pickColor = (c: Color) => {
     if (showColorPicker === null) return
-    dispatch(playCardAction({ cardIx: showColorPicker, askedColor: c }))
+    dispatch(PlayCardThunk({ cardIndex: showColorPicker, askedColor: c }))
     setShowColorPicker(null)
   }
 
   const handleDraw = () => {
     if (!myTurn || !round) return
-    dispatch(drawAction())
+    dispatch(DrawCardThunk())
   }
 
   const handleUno = () => {
-    dispatch(sayUnoAction(meIx))
+    dispatch(SayUnoThunk())
   }
 
   const handleAccuse = (opIx: number) => {
     if (!round) return
-    dispatch(accuseAction({ accuser: meIx, accused: opIx }))
+    dispatch(AccuseThunk(opIx))
   }
 
   const handleClosePopup = () => {
@@ -132,7 +133,7 @@ const GameView: React.FC<GameViewProps> = ({
     if (playerInTurn == null) return
     if (playerInTurn === meIx) return
 
-    dispatch(botTakeTurn())
+    dispatch(BotTakeTurn())
   }, [dispatch, round, game, playerInTurn, roundEnded, isGameOver, meIx])
 
   useEffect(() => {

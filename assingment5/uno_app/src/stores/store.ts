@@ -1,7 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit'
-import authReducer from './authSlice'
-import serverGameReducer from './serverGameSlice'
-import unoGameReducer from './unoGameSlice'
+import authReducer from '../slices/authSlice'
+import serverGameReducer from '../slices/serverGameSlice'
+import unoGameReducer from '../slices/unoGameSlice'
 
 export const store = configureStore({
   reducer: {

@@ -1,16 +1,19 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import '../style/GameHome.css'
-import { useAppDispatch, useAppSelector } from '../store/hooks'
-import { selectIsAuthed, selectUsername } from '../store/authSlice'
-import { createLobby, subscribeAll, refreshMyHand } from '../store/serverGameSlice'
+import { selectIsAuthed, selectUsername } from '../slices/authSlice'
+import { useSelector } from 'react-redux'
+import { useAppDispatch } from 'src/stores/hooks'
+import LobbyThunk from '../thunks/LobbyThunk'
+import { subscribeToGameUpdates } from '../thunks/GameUpdatesThunk'
+import { subscribeToGameEvents } from '../thunks/GameEventsThunk'
 
 const GameHomeView: React.FC = () => {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
 
-  const isAuthed = useAppSelector(selectIsAuthed)
-  const username = useAppSelector(selectUsername)
+  const isAuthed = useSelector(selectIsAuthed)
+  const username = useSelector(selectUsername)
 
   const [botCounter, setBotCounter] = useState<number>(1)
   const [cardsPerPlayer, setCardsPerPlayer] = useState<number>(7)
@@ -57,18 +60,14 @@ const GameHomeView: React.FC = () => {
     }
     setError('')
     try {
-      const result = await dispatch(
-        createLobby({
-          meName: username,
-          targetScore,
-          cardsPerPlayer,
-        }),
-      ).unwrap()
-
-      // result has { gameId, meIndex, game }
+      const result = await dispatch(LobbyThunk({
+        meName: username,
+        targetScore,
+        cardsPerPlayer,
+      }))
       const gameId: string = result.gameId
-      await dispatch(subscribeAll())
-      await dispatch(refreshMyHand())
+      dispatch(subscribeToGameUpdates)
+      dispatch(subscribeToGameEvents)
 
       navigate(`/game-server?gameId=${encodeURIComponent(gameId)}`)
     } catch (e: any) {

@@ -29,6 +29,7 @@ export type {
 
 export * from './models/gameResolverTypes'
 export * from './models/events'
+export * from './models/dtos'
 
 export {
   createGame,

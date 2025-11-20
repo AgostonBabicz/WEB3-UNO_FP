@@ -1,22 +1,23 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import '../style/Auth.css'
-import { useAppDispatch, useAppSelector } from '../store/hooks'
 import {
-  login,
-  register,
   selectAuthError,
   selectAuthStatus,
   selectIsAuthed,
-} from '../store/authSlice'
+} from '../slices/authSlice'
+import { useSelector } from 'react-redux'
+import { useAppDispatch } from 'src/stores/hooks'
+import LoginThunk from '../thunks/LoginThunk'
+import RegisterThunk from '../thunks/RegisterThunk'
 
 const AuthView: React.FC = () => {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
 
-  const isAuthed = useAppSelector(selectIsAuthed)
-  const status = useAppSelector(selectAuthStatus)
-  const errorFromStore = useAppSelector(selectAuthError)
+  const isAuthed = useSelector(selectIsAuthed)
+  const status = useSelector(selectAuthStatus)
+  const errorFromStore = useSelector(selectAuthError)
 
   const [mode, setMode] = useState<'login' | 'register'>('login')
   const [username, setUsername] = useState('')
@@ -46,9 +47,9 @@ const AuthView: React.FC = () => {
 
     try {
       if (mode === 'login') {
-        await dispatch(login(payload)).unwrap()
+        await dispatch(LoginThunk(payload))
       } else {
-        await dispatch(register(payload)).unwrap()
+        await dispatch(RegisterThunk(payload))
       }
       // navigation happens in useEffect when isAuthed flips true
     } catch (err: any) {

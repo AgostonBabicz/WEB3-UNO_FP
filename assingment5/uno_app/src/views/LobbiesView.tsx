@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import '../style/GameHome.css'
-import { useAppDispatch, useAppSelector } from '../store/hooks'
-import { selectUsername, selectIsAuthed } from '../store/authSlice'
+import { useAppDispatch, useAppSelector } from '../stores/hooks'
+import { selectUsername, selectIsAuthed } from '../slices/authSlice'
 import {
-  loadWaitingGames,
-  joinLobby,
-  subscribeAll,
-  refreshMyHand,
   selectWaitingGames,
-} from '../store/serverGameSlice'
+} from '../slices/serverGameSlice'
+import { subscribeToGameUpdates } from '../thunks/GameUpdatesThunk'
+import { subscribeToGameEvents } from '../thunks/GameEventsThunk'
+import RefreshMyHandThunk from 'src/thunks/RefreshHandThunk'
+import LoadWaitingGamesThunk from 'src/thunks/LoadWaitingGamesThunk'
+import JoinLobbyThunk from 'src/thunks/JoinLobbyThunk'
 
 const LobbiesView: React.FC = () => {
   const dispatch = useAppDispatch()
@@ -26,7 +27,7 @@ const LobbiesView: React.FC = () => {
     setLoading(true)
     setError(null)
     try {
-      await dispatch(loadWaitingGames()).unwrap()
+      await dispatch(LoadWaitingGamesThunk())
     } catch (e: any) {
       setError(e?.message ?? 'Failed to load lobbies')
     } finally {
@@ -40,11 +41,12 @@ const LobbiesView: React.FC = () => {
       return
     }
     try {
-      const result = await dispatch(joinLobby({ id: gameId, myName: username })).unwrap()
+      const result = await dispatch(JoinLobbyThunk({ id: gameId, myName: username }))
 
       const id: string = result.gameId
-      await dispatch(subscribeAll())
-      await dispatch(refreshMyHand())
+      await dispatch(subscribeToGameUpdates)
+      await dispatch(subscribeToGameEvents)
+      await dispatch(RefreshMyHandThunk())
 
       navigate(`/game-server?gameId=${encodeURIComponent(id)}`)
     } catch (e: any) {

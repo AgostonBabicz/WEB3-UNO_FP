@@ -2,26 +2,27 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import '../style/Game.css'
 
-import { useAppDispatch, useAppSelector } from '../store/hooks'
+import { useAppDispatch, useAppSelector } from '../stores/hooks'
 import {
   selectServerGame,
   selectServerGamePopUp,
   selectServerGameGameOver,
   selectServerGameMyHand,
   selectServerGamePlayable,
-  subscribeAll,
-  refreshMyHand,
-  startRound,
-  playCard,
-  drawCard,
-  sayUno as sayUnoThunk,
-  accuse as accuseThunk,
-  resetGameOver,
-} from '../store/serverGameSlice'
+} from '../slices/serverGameSlice'
+import { serverGameActions } from '../slices/serverGameSlice'
 import { Color } from '@uno/domain'
-import { PopUpMessage } from '../components/PopUpMessage'
 import { UnoCard } from '../components/UnoCard'
 import { UnoDeck } from '../components/UnoDeck'
+import PlayCardThunk from '../thunks/PlayCardThunk'
+import DrawCardThunk from '../thunks/DrawCardThunk'
+import SayUnoThunk from '../thunks/SayUnoThunk'
+import AccuseThunk from '../thunks/AccuseThunk'
+import StartRoundThunk from '../thunks/StartRoundThunk'
+import { subscribeToGameUpdates } from '../thunks/GameUpdatesThunk'
+import { subscribeToGameEvents } from '../thunks/GameEventsThunk'
+import RefreshMyHandThunk from '../thunks/RefreshHandThunk'
+import { PopUpMessage } from 'src/components/PopUpMessage'
 
 const GameServerView: React.FC = () => {
   const dispatch = useAppDispatch()
@@ -38,36 +39,44 @@ const GameServerView: React.FC = () => {
 
   const urlGameId = searchParams.get('gameId') || ''
 
-  const players = useMemo(() => game?.players ?? [], [game])
+  const players = useMemo(() => {
+    if (!game) return []
+    return game.players.map((name, index) => ({
+      id: name,
+      name: name,
+      score: game.scores[index] ?? 0,
+      handCount: game.currentRound?.playerHands.get(index)?.cards.size ?? 0,
+    }))
+  }, [game])
+
   const roundStarted = !!game?.currentRound
   const enoughPlayers = players.length >= 2
-
-  const currentTurn: number | null = game?.currentRound?.playerInTurnIndex ?? null
-
+  const currentTurn: number | null = game?.currentRound?.currentPlayerIndex ?? null // 'currentPlayerIndex' in domain
   const myTurn = roundStarted && meIndex != null && currentTurn != null && currentTurn === meIndex
-
   const yourHand = myHand
-
-  const discardTop = game?.currentRound?.discardTop
-  const drawPileSize = game?.currentRound?.drawPileSize ?? 0
+  const discardTop = game?.currentRound?.discardDeck.first() 
+  const drawPileSize = game?.currentRound?.drawDeck.size ?? 0
 
   const canPlayAt = (ix: number) => playable.includes(ix)
 
-  // handle subscriptions on mount
   useEffect(() => {
     if (urlGameId && !gameId) {
       console.warn('URL gameId present but store has no gameId. You may want to hydrate from URL.')
     }
+    const updatesSub = dispatch(subscribeToGameUpdates)
+    const eventsSub = dispatch(subscribeToGameEvents)
+    dispatch(RefreshMyHandThunk)
 
-    dispatch(subscribeAll())
-    dispatch(refreshMyHand())
+    return () => {
+      if (updatesSub && 'unsubscribe' in updatesSub) updatesSub.unsubscribe()
+      if (eventsSub && 'unsubscribe' in eventsSub) eventsSub.unsubscribe()
+    }
   }, [])
 
-  // navigate to game over when serverGameSlice says so
   useEffect(() => {
     if (gameOver.triggered && gameOver.winner) {
       navigate(`/game-over?winner=${encodeURIComponent(gameOver.winner)}`)
-      dispatch(resetGameOver())
+      dispatch(serverGameActions.resetGameOver())
     }
   }, [gameOver.triggered, gameOver.winner, navigate, dispatch])
 
@@ -79,40 +88,38 @@ const GameServerView: React.FC = () => {
     if (card.type === 'WILD' || card.type === 'WILD_DRAW') {
       setShowColorPicker(ix)
     } else {
-      await dispatch(playCard({ cardIndex: ix })).unwrap()
+      await dispatch(PlayCardThunk({ cardIndex: ix }))
     }
   }
 
   const pickColor = async (c: Color) => {
     if (showColorPicker === null) return
-    await dispatch(playCard({ cardIndex: showColorPicker, askedColor: c })).unwrap()
+    await dispatch(PlayCardThunk({ cardIndex: showColorPicker, askedColor: c }))
     setShowColorPicker(null)
   }
 
   const onDraw = async () => {
     if (!myTurn) return
-    await dispatch(drawCard()).unwrap()
+    await dispatch(DrawCardThunk())
   }
 
   const onUno = async () => {
-    await dispatch(sayUnoThunk()).unwrap()
+    await dispatch(SayUnoThunk())
   }
 
   const accuseOpponent = async (opIx: number) => {
-    await dispatch(accuseThunk(opIx)).unwrap()
+    await dispatch(AccuseThunk(opIx))
   }
 
   const onStartRoundClick = async () => {
-    await dispatch(startRound()).unwrap()
+    await dispatch(StartRoundThunk())
   }
 
-  const clearMessage = () => {
-    // hide PopUpMessage by action from slice
-    // but we already have clearMessage exported in serverGameSlice
-    dispatch({ type: 'serverGame/clearMessage' })
-  }
+  // const handleCloseMessage = () => {
+  //   dispatch(serverGameActions.clearMessage())
+  // }
 
-  const visibleOpponents = players.filter((_: any, i: number) => i !== meIndex)
+  const visibleOpponents = players.filter((_, i) => i !== meIndex)
 
   return (
     <main className={`play uno-theme${!myTurn ? ' waiting' : ''}`}>
@@ -140,7 +147,7 @@ const GameServerView: React.FC = () => {
       )}
 
       <header className="row opponents">
-        {visibleOpponents.map((p: any) => {
+        {visibleOpponents.map((p) => {
           const index = players.indexOf(p)
           const isPlaying = currentTurn === index
           return (
@@ -170,13 +177,18 @@ const GameServerView: React.FC = () => {
         show={popUp.show}
         title={popUp.title || ''}
         message={popUp.message || ''}
-        onClose={clearMessage}
+        onClose={handleCloseMessage}
       /> */}
 
       <section className="table">
         <div className="pile discard">
+          {/* 1. FIXED CARD TYPE SAFETY */}
           {discardTop && (
-            <UnoCard type={discardTop.type} color={discardTop.color} number={discardTop.number} />
+            <UnoCard 
+              type={discardTop.type} 
+              color={'color' in discardTop ? discardTop.color : undefined} 
+              number={'number' in discardTop ? (discardTop.number as any) : undefined}
+            />
           )}
         </div>
         <div className="pile draw" onClick={onDraw} title="Draw">
