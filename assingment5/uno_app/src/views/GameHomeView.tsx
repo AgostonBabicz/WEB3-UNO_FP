@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import '../style/GameHome.css'
-import { selectIsAuthed, selectUsername } from '../slices/authSlice'
+import { logout, selectIsAuthed, selectUsername } from '../slices/authSlice'
 import { useSelector } from 'react-redux'
 import { useAppDispatch } from 'src/stores/hooks'
 import LobbyThunk from '../thunks/LobbyThunk'
@@ -77,6 +77,11 @@ const GameHomeView: React.FC = () => {
 
   const browseLobbies = () => {
     navigate('/lobbies')
+  }
+
+  const handleLogout = () => {
+    dispatch(logout()) // This clears Redux AND LocalStorage
+    navigate('/')      // Go back to login
   }
 
   return (
@@ -158,6 +163,10 @@ const GameHomeView: React.FC = () => {
               </button>
               <button className="cta" onClick={browseLobbies}>
                 Browse Public Lobbies
+              </button>
+
+              <button className="cta" style={{ backgroundColor: '#e11d48' }} onClick={handleLogout}>
+                Logout
               </button>
             </div>
           </>

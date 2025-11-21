@@ -1,13 +1,14 @@
 import { from } from 'rxjs'
-import { map, filter } from 'rxjs/operators'
+import { map, filter, tap } from 'rxjs/operators'
 import { apollo } from '../apollo'
 import { serverGameActions } from '../slices/serverGameSlice'
 import { SUB_UPDATES } from '../graphql/ops'
 import type { AppDispatch, RootState } from '../stores/store'
-import type { IndexedGame } from '@uno/domain'
+import refreshMyHand from './RefreshHandThunk'
+import { GraphQlGame, parseGame } from '@uno/domain'
 
 type GameUpdatesResponse = {
-  gameUpdates: IndexedGame
+  gameUpdates: GraphQlGame
 }
 
 export const subscribeToGameUpdates = (
@@ -24,12 +25,20 @@ export const subscribeToGameUpdates = (
 
   const subscription = source$.pipe(
     map(result => result.data?.gameUpdates),
-    filter((game): game is IndexedGame => !!game),
-    map(game => serverGameActions.setGame(game))
+    filter((game): game is GraphQlGame => !!game),
+    map(rawGame => parseGame(rawGame)),
+    
+    tap(domainGame => {
+      dispatch(serverGameActions.setGame(domainGame))
+      dispatch(refreshMyHand())
+    })
   ).subscribe({
-    next: (action) => dispatch(action),
     error: (err) => console.error('Game Updates Error:', err)
   })
 
   return subscription
+}
+
+function from_graphql_game(rawGame: GraphQlGame): any {
+  throw new Error('Function not implemented.')
 }

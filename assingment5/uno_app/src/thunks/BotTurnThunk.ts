@@ -3,12 +3,12 @@ import {
   roundCanPlay, 
   checkUnoFailure 
 } from '@uno/domain'
-import type { Game, Round, Color } from '@uno/domain'
+import type { Game, Round, Color, Card } from '@uno/domain'
 import { unoGameActions } from '../slices/unoGameSlice'
 import type { AppDispatch, RootState } from '../stores/store'
 import { randomDelay } from '../utils/randomDelay'
 
-// --- HELPERS ---
+
 function currentRound(game: Game | null): Round | undefined {
   return game?.currentRound
 }
@@ -41,7 +41,7 @@ function chooseWildColor(r: Round, ix: number): Color {
   return best
 }
 
-// --- THE THUNK ---
+
 const botTakeTurn = () => async (dispatch: AppDispatch, getState: () => RootState) => {
   const root = getState()
   const slice = root.unoGame
@@ -54,10 +54,7 @@ const botTakeTurn = () => async (dispatch: AppDispatch, getState: () => RootStat
   const ix = currentPlayerIndex(r)
   if (ix == null || !isBot(slice.opts, ix)) return false
 
-  // 1. Wait for "thinking" time
   await new Promise((res) => setTimeout(res, randomDelay()))
-
-  // 2. Re-check state after delay (in case user left or reset)
   let s2 = getState().unoGame
   let g2 = s2.game as Game | null
   let r2 = currentRound(g2)
@@ -70,7 +67,6 @@ const botTakeTurn = () => async (dispatch: AppDispatch, getState: () => RootStat
 
   const opts = s2.opts
 
-  // 3. Bot Logic: Accuse others
   if (opts) {
     for (let t = 0; t < opts.players.length; t++) {
       if (t === ix) continue
@@ -85,7 +81,6 @@ const botTakeTurn = () => async (dispatch: AppDispatch, getState: () => RootStat
     }
   }
 
-  // 4. Bot Logic: Play Card
   const hand = roundGetHand(r2, ix)
   let played = false
 
@@ -111,7 +106,6 @@ const botTakeTurn = () => async (dispatch: AppDispatch, getState: () => RootStat
     dispatch(unoGameActions.draw())
   }
 
-  // 5. Bot Logic: Say Uno?
   s2 = getState().unoGame
   g2 = s2.game as Game | null
   r2 = currentRound(g2)

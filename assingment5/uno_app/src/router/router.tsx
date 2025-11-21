@@ -41,10 +41,7 @@ const GameOverRoute: React.FC = () => {
 }
 
 const AppRouter: React.FC = () => {
-  const basename =
-    (import.meta as any)?.env?.BASE_URL && (import.meta as any).env.BASE_URL !== '/'
-      ? (import.meta as any).env.BASE_URL
-      : '/'
+  const basename = process.env.PUBLIC_URL || '/'
 
   return (
     <BrowserRouter basename={basename}>

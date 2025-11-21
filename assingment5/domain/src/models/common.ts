@@ -14,6 +14,8 @@ export type UUID = string
 type Indexed<Y, pending extends boolean> = Readonly<Y & {id: string, pending: pending}>
 export type IndexedGame = Indexed<Game, true>
 
+// A placeholder card used to fill decks/hands so .size returns the correct number
+const DUMMY_CARD: Card = { type: 'NUMBERED', color: 'BLUE', number: 0 }
 
 export function parseCard(raw: any): Card {
   if (!raw) throw new Error('Invalid card data')
@@ -33,17 +35,25 @@ export function parseCard(raw: any): Card {
   return { type: raw.type as any, color: raw.color as Color }
 }
 
-export function parseRound(raw: any, playerNames: string[]): Round {
+export function parseRound(
+  raw: any, 
+  playerNames: string[], 
+  playerHandCounts: number[]
+): Round {
   if (!raw) throw new Error('Invalid round data')
 
   const discardDeck: Deck = raw.discardTop 
     ? createDeckWithCards([parseCard(raw.discardTop)]) 
     : createEmptyDeck()
 
-  const drawDeck: Deck = createEmptyDeck()
+  const drawSize = raw.drawPileSize ?? 0
+  const drawDeck: Deck = createDeckWithCards(Array(drawSize).fill(DUMMY_CARD))
 
   const playerHands = List<PlayerHand>(
-    playerNames.map(() => createHand([]))
+    playerNames.map((_, index) => {
+      const count = playerHandCounts[index] ?? 0
+      return createHand(Array(count).fill(DUMMY_CARD))
+    })
   )
 
   return {
@@ -76,9 +86,10 @@ export function parseGame(raw: any): IndexedGame {
 
   const players = raw.players?.map((p: any) => p.name) ?? []
   const scores = raw.players?.map((p: any) => p.score ?? 0) ?? []
+  const handCounts = raw.players?.map((p: any) => p.handCount ?? 0) ?? []
 
   const currentRound = raw.currentRound 
-    ? parseRound(raw.currentRound, players) 
+    ? parseRound(raw.currentRound, players, handCounts) 
     : undefined
 
   const game: Game = {
@@ -95,29 +106,6 @@ export function parseGame(raw: any): IndexedGame {
   return { ...game, id: raw.id, pending: false } as unknown as IndexedGame
 }
 
-export function from_graphql_game(raw: GraphQlGame): IndexedGame {
-  const playerNames = raw.players.map(p => p.name)
-  const scores = raw.players.map(p => p.score)
-
-  const currentRound = raw.currentRound 
-    ? parseRound(raw.currentRound, playerNames) 
-    : undefined
-
-  const game: Game = {
-    playerCount: playerNames.length,
-    targetScore: raw.targetScore,
-    cardsPerPlayer: raw.cardsPerPlayer,
-    players: playerNames,
-    scores: scores,
-    currentRound,
-    winner: raw.winnerIndex ?? undefined,
-    // Defaults for client-side logic
-    randomizer: () => 0, 
-    shuffler: (arr) => [...arr]
-  }
-
-  return { ...game, id: raw.id, pending: false } as unknown as IndexedGame
-}
 export function parseEvent(raw: any): GameEvent {
   if (!raw || !raw.__typename) throw new Error('Invalid event data')
 
@@ -148,3 +136,5 @@ export function parseEvent(raw: any): GameEvent {
       return raw as GameEvent
   }
 }
+export const toDomainCard = parseCard
+export const toDomainGame = parseGame

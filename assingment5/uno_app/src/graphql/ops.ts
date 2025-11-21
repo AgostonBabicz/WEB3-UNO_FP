@@ -16,6 +16,7 @@ export const CREATE_GAME = gql`
           saidUno
         }
         currentRound {
+          id
           playerInTurnIndex
         }
       }
@@ -34,6 +35,7 @@ export const ADD_PLAYER = gql`
         score
       }
       currentRound {
+        id
         playerInTurnIndex
       }
     }
@@ -45,6 +47,7 @@ export const START_ROUND = gql`
     startRound(input: $input) {
       id
       currentRound {
+        id
         playerInTurnIndex
         discardTop {
           type
@@ -71,6 +74,7 @@ export const PLAY_CARD = gql`
     playCard(input: $input) {
       id
       currentRound {
+        id
         playerInTurnIndex
         discardTop {
           type
@@ -97,8 +101,14 @@ export const DRAW_CARD = gql`
     drawCard(input: $input) {
       id
       currentRound {
+        id
         playerInTurnIndex
         drawPileSize
+        discardTop {
+          type
+          color
+          number
+        }
       }
       players {
         name
@@ -115,6 +125,16 @@ export const SAY_UNO = gql`
       players {
         name
         saidUno
+      }
+      currentRound {
+        id
+        playerInTurnIndex
+        drawPileSize
+        discardTop {
+          type
+          color
+          number
+        }
       }
     }
   }
@@ -148,6 +168,7 @@ export const GET_GAME = gql`
         saidUno
       }
       currentRound {
+        id
         playerInTurnIndex
         discardTop {
           type
@@ -256,6 +277,7 @@ export const SUB_UPDATES = gql`
         saidUno
       }
       currentRound {
+        id
         playerInTurnIndex
         discardTop {
           type
@@ -281,6 +303,7 @@ export const WAITING_GAMES = gql`
         name
       }
       currentRound {
+        id
         playerInTurnIndex
       }
     }

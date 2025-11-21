@@ -5,7 +5,8 @@ import {
   roundDraw,
   roundPlay,
   catchUnoFailure,
-  roundSayUno as domainSayUno // Alias to avoid conflict if needed
+  roundSayUno as domainSayUno,
+  startNewRoundModel
 } from '@uno/domain'
 import type { Game, Round, Color } from '@uno/domain'
 
@@ -38,11 +39,13 @@ const unoGameSlice = createSlice({
     init(state, action: PayloadAction<Opts>) {
       const opts = action.payload
       state.opts = opts
-      state.game = createGame({
+      const newGame = createGame({
         players: opts.players,
         targetScore: opts.targetScore,
         cardsPerPlayer: opts.cardsPerPlayer,
-      }) as Draft<Game>
+      })
+      state.game = startNewRoundModel(newGame) as Draft<Game>
+      
       state.showPopUpMessage = false
       state.popUpMessage = null
       state.popUpTitle = null
@@ -50,11 +53,12 @@ const unoGameSlice = createSlice({
     reset(state) {
       const opts = state.opts
       if (!opts) return
-      state.game = createGame({
+      const newGame = createGame({
         players: opts.players,
         targetScore: opts.targetScore,
         cardsPerPlayer: opts.cardsPerPlayer,
-      }) as Draft<Game>
+      })
+      state.game = startNewRoundModel(newGame) as Draft<Game>
       state.showPopUpMessage = false
       state.popUpMessage = null
       state.popUpTitle = null

@@ -4,6 +4,10 @@ import {
   init,
   clearMessage,
   selectUnoGame,
+  playCard,
+  draw,
+  sayUno,
+  accuse
 } from '../slices/unoGameSlice'
 
 import type { Game,Round,Color } from '@uno/domain'
@@ -19,10 +23,6 @@ import { UnoCard } from '../components/UnoCard'
 import { UnoDeck } from '../components/UnoDeck'
 import { PopUpBox } from '../components/PopUpBox'
 import { useNavigate } from 'react-router-dom'
-import PlayCardThunk from '../thunks/PlayCardThunk'
-import DrawCardThunk from '../thunks/DrawCardThunk'
-import SayUnoThunk from '../thunks/SayUnoThunk'
-import AccuseThunk from '../thunks/AccuseThunk'
 import BotTakeTurn from '../thunks/BotTurnThunk'
 
 
@@ -100,27 +100,27 @@ const GameView: React.FC<GameViewProps> = ({
       return
     }
 
-    dispatch(PlayCardThunk({ cardIndex : ix }))
+    dispatch(playCard({ cardIx : ix }))
   }
 
   const pickColor = (c: Color) => {
     if (showColorPicker === null) return
-    dispatch(PlayCardThunk({ cardIndex: showColorPicker, askedColor: c }))
+    dispatch(playCard({ cardIx: showColorPicker, askedColor: c }))
     setShowColorPicker(null)
   }
 
   const handleDraw = () => {
     if (!myTurn || !round) return
-    dispatch(DrawCardThunk())
+    dispatch(draw())
   }
 
   const handleUno = () => {
-    dispatch(SayUnoThunk())
+    dispatch(sayUno( meIx ))
   }
 
   const handleAccuse = (opIx: number) => {
     if (!round) return
-    dispatch(AccuseThunk(opIx))
+    dispatch(accuse({ accuser: meIx, accused: opIx }))
   }
 
   const handleClosePopup = () => {

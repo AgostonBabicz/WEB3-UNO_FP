@@ -44,7 +44,7 @@ const GameServerView: React.FC = () => {
     return game.players.map((name, index) => ({
       id: name,
       name: name,
-      score: game.scores[index] ?? 0,
+      score: game.scores?.[index] ?? 0,
       handCount: game.currentRound?.playerHands.get(index)?.cards.size ?? 0,
     }))
   }, [game])

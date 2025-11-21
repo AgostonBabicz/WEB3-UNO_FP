@@ -9,7 +9,7 @@ import {
   PlayableData,
   AuthUser
 } from '@uno/domain'
-import { from_graphql_game, parseCard } from '@uno/domain'
+import { parseGame, parseCard } from '@uno/domain'
 import { IndexedGame } from '@uno/domain'
 import { 
     CREATE_GAME, 
@@ -74,7 +74,7 @@ export async function createGame(input: {
   })
   const rawGame = data?.createGame?.game
   if (!rawGame) throw new Error('createGame failed')
-  return from_graphql_game(rawGame)
+  return parseGame(rawGame)
 }
 
 export async function getGame(gameId: string): Promise<IndexedGame> {
@@ -84,7 +84,7 @@ export async function getGame(gameId: string): Promise<IndexedGame> {
     fetchPolicy: 'no-cache',
   })
   if (!data?.game) throw new Error('Game not found')
-  return from_graphql_game(data.game)
+  return parseGame(data.game)
 }
 
 export async function getWaitingGames(): Promise<IndexedGame[]> {
@@ -93,7 +93,7 @@ export async function getWaitingGames(): Promise<IndexedGame[]> {
     fetchPolicy: 'no-cache',
   })
   const rawGames = data?.waitingGames ?? []
-  return rawGames.map(from_graphql_game)
+  return rawGames.map(parseGame)
 }
 
 export async function addPlayer(gameId: string, name: string, userId: string): Promise<IndexedGame> {
@@ -103,7 +103,7 @@ export async function addPlayer(gameId: string, name: string, userId: string): P
     variables: { gameId, name, userId },
   })
   if (!data?.addPlayer) throw new Error('addPlayer failed')
-  return from_graphql_game(data.addPlayer)
+  return parseGame(data.addPlayer)
 }
 
 // --- GAMEPLAY API ---
@@ -114,7 +114,7 @@ export async function startRound(gameId: string, userId: string): Promise<Indexe
     variables: { input: { gameId, userId } },
   })
   if (!data?.startRound) throw new Error('startRound failed')
-  return from_graphql_game(data.startRound)
+  return parseGame(data.startRound)
 }
 
 export async function getHand(gameId: string, playerIndex: number): Promise<Card[]> {
@@ -142,7 +142,7 @@ export async function playCard(input: any): Promise<IndexedGame> {
     variables: { input },
   })
   if (!data?.playCard) throw new Error('playCard failed')
-  return from_graphql_game(data.playCard)
+  return parseGame(data.playCard)
 }
 
 export async function drawCard(input: any): Promise<IndexedGame> {
@@ -151,7 +151,7 @@ export async function drawCard(input: any): Promise<IndexedGame> {
     variables: { input },
   })
   if (!data?.drawCard) throw new Error('drawCard failed')
-  return from_graphql_game(data.drawCard)
+  return parseGame(data.drawCard)
 }
 
 export async function sayUno(input: any): Promise<IndexedGame> {
@@ -160,7 +160,7 @@ export async function sayUno(input: any): Promise<IndexedGame> {
     variables: { input },
   })
   if (!data?.sayUno) throw new Error('sayUno failed')
-  return from_graphql_game(data.sayUno)
+  return parseGame(data.sayUno)
 }
 
 export async function accuseUno(input: any): Promise<IndexedGame> {
@@ -169,5 +169,5 @@ export async function accuseUno(input: any): Promise<IndexedGame> {
     variables: { input },
   })
   if (!data?.accuseUno) throw new Error('accuseUno failed')
-  return from_graphql_game(data.accuseUno)
+  return parseGame(data.accuseUno)
 }
