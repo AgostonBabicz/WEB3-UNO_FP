@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import '../style/GameOver.css'
-import { useNavigate } from 'react-router-dom'
+import { useRouter } from 'next/navigation'
 type GameOverViewProps = {
   winner: string
 }
@@ -17,7 +17,7 @@ const GameOverView: React.FC<GameOverViewProps> = ({ winner }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const confettiRef = useRef<ConfettiParticle[]>([])
   const animRef = useRef<number | null>(null)
-  const navigate = useNavigate()
+  const router = useRouter()
   const initConfetti = () => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -88,7 +88,7 @@ const GameOverView: React.FC<GameOverViewProps> = ({ winner }) => {
         <button
           className="btn home-btn"
           onClick={() => {
-            navigate('/home')
+            router.push('/')
           }}
         >
           Back to Home
