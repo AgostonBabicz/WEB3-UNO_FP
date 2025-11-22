@@ -1,11 +1,9 @@
 import * as api from '../api/api'
 import { serverGameActions } from '../slices/serverGameSlice'
 import type { AppDispatch, RootState } from '../stores/store'
+import { JoinLobbyPayload } from '@uno/domain'
 
-type JoinLobbyPayload = { 
-  id: string
-  myName: string 
-}
+
 
 const joinLobby = ({ id: gameId, myName }: JoinLobbyPayload) => async (dispatch: AppDispatch, getState: () => RootState) => {
   try {

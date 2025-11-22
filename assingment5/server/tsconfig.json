@@ -8,7 +8,8 @@
     "target": "ESNext",
     "baseUrl": "./",
     "paths": {
-      "@uno/shared/*": ["../shared/src/*"]
+      "@uno/domain": ["../domain/src/index.ts"],
+      "@uno/domain/*": ["../domain/src/*"]
     },
     "outDir": ".build",
     "esModuleInterop": true,
@@ -17,11 +18,11 @@
     "experimentalDecorators": true,
     "sourceMap": false,
     "inlineSourceMap": false,
-    "rootDirs": ["./src", "../shared/src"],
+    "rootDirs": ["./src", "../domain/src"],
     "typeRoots": ["node_modules/@types", "types", "@types/node"],
     "types": ["node"],
     "moduleResolution": "node"
   },
-  "include": ["src", "../shared/src"],
+  "include": ["src", "../domain/src"],
   "exclude": ["node_modules"]
 }

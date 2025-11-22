@@ -1,12 +1,7 @@
 import { serverGameActions } from '../slices/serverGameSlice'
 import type { AppDispatch, RootState } from '../stores/store'
 import * as api from '../api/api'
-
-type CreateLobbyOpts = {
-  meName: string
-  targetScore?: number
-  cardsPerPlayer?: number
-}
+import { CreateLobbyOpts } from '@uno/domain'
 
 const createLobby = (opts: CreateLobbyOpts) => async (dispatch: AppDispatch, getState: () => RootState) => {
   try {

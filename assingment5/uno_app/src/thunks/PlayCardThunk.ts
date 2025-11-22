@@ -1,13 +1,10 @@
 import * as api from '../api/api'
 import { serverGameActions } from '../slices/serverGameSlice'
 import type { AppDispatch, RootState } from '../stores/store'
-import type { Color } from '@uno/domain'
+import type { PlayCardArgs } from '@uno/domain'
 import RefreshHand from './RefreshHandThunk'
 
-type PlayCardArgs = {
-  cardIndex: number
-  askedColor?: Color
-}
+
 
 const playCard = ({ cardIndex, askedColor }: PlayCardArgs) => async (dispatch: AppDispatch, getState: () => RootState) => {
   const state = getState()

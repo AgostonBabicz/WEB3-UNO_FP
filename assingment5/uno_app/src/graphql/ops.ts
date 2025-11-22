@@ -145,9 +145,24 @@ export const ACCUSE_UNO = gql`
     accuseUno(input: $input) {
       id
       players {
+        id
         name
         handCount
+        score
         saidUno
+      }
+      currentRound {
+        id
+        playerInTurnIndex
+        drawPileSize
+        discardTop {
+          type
+          color
+          number
+        }
+        currentColor
+        direction
+        hasEnded
       }
     }
   }

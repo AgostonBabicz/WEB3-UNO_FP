@@ -16,6 +16,10 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "baseUrl": "./",
+    "paths": {
+      "@uno/domain": ["../domain/src/index.ts"],
+      "@uno/domain/*": ["../domain/src/*"]
+    }
   },
   "include": ["src"]
 }

@@ -1,8 +1,9 @@
 import * as api from '../api/api'
 import { authActions } from '../slices/authSlice'
 import type { AppDispatch } from '../stores/store'
+import { LoginCreds } from '@uno/domain'
 
-type LoginCreds = { username: string; password: string }
+
 
 const LoginThunk = (creds: LoginCreds) => async (dispatch: AppDispatch) => {
   try {

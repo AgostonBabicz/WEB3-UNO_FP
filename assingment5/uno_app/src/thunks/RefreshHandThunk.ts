@@ -1,17 +1,14 @@
 import * as api from '../api/api'
 import { serverGameActions } from '../slices/serverGameSlice'
 import type { AppDispatch, RootState } from '../stores/store'
-import type { Card } from '@uno/domain'
+import type { RefreshHandData } from '@uno/domain'
 
-type HandData = {
-  myHand: Card[]
-  playable: number[]
-}
+
 
 const refreshMyHand = () => async (
   dispatch: AppDispatch, 
   getState: () => RootState
-): Promise<HandData | null> => {
+): Promise<RefreshHandData | null> => {
   
   const { gameId, meIndex } = getState().serverGame
   

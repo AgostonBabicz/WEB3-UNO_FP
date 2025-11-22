@@ -228,7 +228,8 @@ export function drawCard(gameId: string, playerIndex: number, publish: PublishFn
   const ng = updateGameWithRoundStep(gameId, (round) => roundDraw(round))
   const view = gameView(ng, gameId)
 
-  notify(gameId, 'Drawn card', `Player ${playerIndex} drawn a card`, publish)
+  const playerName = g.players[playerIndex] ?? `Player ${playerIndex}`
+  notify(gameId, 'Drawn card', `${playerName} drew a card`, publish)
   publish({ __typename: 'CardDrawn', gameId, playerIndex, drew: 1 })
   publish({ __typename: 'GameUpdated', game: view })
   return view
@@ -253,6 +254,7 @@ export function playCard(
   const rAfter = ng.currentRound
 
   if (rAfter) {
+    const playerName = g.players[playerIndex] ?? `Player ${playerIndex}`
     const playedCardModel = deckTop(roundDiscardPile(rAfter))
     const gqlCard = toGqlCard(playedCardModel)
     if (!gqlCard) {
@@ -265,18 +267,18 @@ export function playCard(
       notify(
         gameId,
         'Numbered card played',
-        `Player ${playerIndex} chose ${color} ${number}`,
+        `${playerName} chose ${color} ${number}`,
         publish,
       )
     } else if (gqlCard.type === 'WILD') {
       const asked = askedColor ?? 'RED'
-      notify(gameId, 'Wild card played', `Player ${playerIndex} chose ${asked}`, publish)
+      notify(gameId, 'Wild card played', `${playerName} chose ${asked}`, publish)
     } else if (gqlCard.type === 'WILD_DRAW') {
       const asked = askedColor ?? 'RED'
       notify(
         gameId,
         'Wild card played',
-        `Player ${playerIndex} chose ${asked}, draw 4 cards`,
+        `${playerName} chose ${asked}, draw 4 cards`,
         publish,
       )
     } else if (gqlCard.type === 'DRAW') {
@@ -284,7 +286,7 @@ export function playCard(
       notify(
         gameId,
         `Draw (${color}) card played`,
-        `Player ${playerIndex} made the next player draw 2 cards`,
+        `${playerName} made the next player draw 2 cards`,
         publish,
       )
     } else if (gqlCard.type === 'REVERSE') {
@@ -292,7 +294,7 @@ export function playCard(
       notify(
         gameId,
         `Reverse (${color}) card played`,
-        `Player ${playerIndex} made the round's direction the opposite`,
+        `${playerName} made the round's direction the opposite`,
         publish,
       )
     } else {
@@ -301,7 +303,7 @@ export function playCard(
       notify(
         gameId,
         `Skip (${color}) card played`,
-        `Player ${playerIndex} skipped the next player in turn`,
+        `${playerName} skipped the next player in turn`,
         publish,
       )
     }
@@ -329,7 +331,8 @@ export function sayUno(gameId: string, playerIndex: number, publish: PublishFn) 
 
   const ng = updateGameWithRoundStep(gameId, (round) => roundSayUno(playerIndex, round))
 
-  notify(gameId, `${playerIndex} said uno`, '', publish)
+  const playerName = g.players[playerIndex] ?? `Player ${playerIndex}`
+  notify(gameId, 'UNO!', `${playerName} yelled UNO!`, publish)
 
   const view = gameView(ng, gameId)
   publish({ __typename: 'UnoSaid', gameId, playerIndex })

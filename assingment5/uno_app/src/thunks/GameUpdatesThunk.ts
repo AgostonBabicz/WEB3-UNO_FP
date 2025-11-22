@@ -5,11 +5,8 @@ import { serverGameActions } from '../slices/serverGameSlice'
 import { SUB_UPDATES } from '../graphql/ops'
 import type { AppDispatch, RootState } from '../stores/store'
 import refreshMyHand from './RefreshHandThunk'
-import { GraphQlGame, parseGame } from '@uno/domain'
+import { GraphQlGame, parseGame, GameUpdatesResponse } from '@uno/domain'
 
-type GameUpdatesResponse = {
-  gameUpdates: GraphQlGame
-}
 
 export const subscribeToGameUpdates = (
   dispatch: AppDispatch, 
@@ -37,8 +34,4 @@ export const subscribeToGameUpdates = (
   })
 
   return subscription
-}
-
-function from_graphql_game(rawGame: GraphQlGame): any {
-  throw new Error('Function not implemented.')
 }

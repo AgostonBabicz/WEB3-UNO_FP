@@ -1,15 +1,11 @@
 import { from } from 'rxjs'
-import { map, filter, tap } from 'rxjs/operators'
+import { map, filter } from 'rxjs/operators'
 import { apollo } from '../apollo'
 import { serverGameActions } from '../slices/serverGameSlice'
 import { SUB_EVENTS } from '../graphql/ops'
 import type { AppDispatch, RootState } from '../stores/store'
-import { parseEvent } from '@uno/domain'
 import * as api from '../api/api'
-
-type GameEventsResponse = {
-  gameEvents: any 
-}
+import { GameEventsResponse, GraphQlGameEvent } from '../../../domain/src/index'
 
 export const subscribeToGameEvents = (
   dispatch: AppDispatch, 
@@ -25,18 +21,23 @@ export const subscribeToGameEvents = (
 
   const subscription = source$.pipe(
     map(result => result.data?.gameEvents),
-    filter(event => !!event),
-    map(rawEvent => parseEvent(rawEvent))
+    filter((event): event is GraphQlGameEvent => !!event)
   ).subscribe({
     next: async (event) => {
       try {
         switch(event.__typename) {
+            case 'Notice':
+                 dispatch(serverGameActions.setMessage({
+                     title: event.title,
+                     message: event.message
+                 }))
+                 break
+
             case 'PlayerJoined':
                 dispatch(serverGameActions.setMessage({ 
                     title: 'New Player', 
-                    message: `${event.player} joined!` 
+                    message: `${event.player.name} joined!`
                 }))
-                
                 const updatedGame = await api.getGame(gameId)
                 dispatch(serverGameActions.setGame(updatedGame))
                 break
@@ -50,7 +51,7 @@ export const subscribeToGameEvents = (
                     const g = await api.getGame(gameId)
                     dispatch(serverGameActions.setGame(g))
                 } else {
-                    dispatch(serverGameActions.setGame(event.game))
+                    dispatch(serverGameActions.setGame(event.game as any))
                 }
                 break
 

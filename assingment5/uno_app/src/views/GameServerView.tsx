@@ -115,9 +115,9 @@ const GameServerView: React.FC = () => {
     await dispatch(StartRoundThunk())
   }
 
-  // const handleCloseMessage = () => {
-  //   dispatch(serverGameActions.clearMessage())
-  // }
+  const handleCloseMessage = () => {
+    dispatch(serverGameActions.clearMessage())
+  }
 
   const visibleOpponents = players.filter((_, i) => i !== meIndex)
 
@@ -173,16 +173,15 @@ const GameServerView: React.FC = () => {
         })}
       </header>
 
-      {/* <PopUpMessage
+      <PopUpMessage
         show={popUp.show}
         title={popUp.title || ''}
         message={popUp.message || ''}
         onClose={handleCloseMessage}
-      /> */}
+      />
 
       <section className="table">
         <div className="pile discard">
-          {/* 1. FIXED CARD TYPE SAFETY */}
           {discardTop && (
             <UnoCard 
               type={discardTop.type} 

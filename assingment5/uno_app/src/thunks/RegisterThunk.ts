@@ -1,8 +1,8 @@
 import * as api from '../api/api'
 import { authActions } from '../slices/authSlice'
 import type { AppDispatch } from '../stores/store'
+import type { RegisterCreds } from '@uno/domain'
 
-type RegisterCreds = { username: string; password: string }
 
 const RegisterThunk = (creds: RegisterCreds) => async (dispatch: AppDispatch) => {
   try {

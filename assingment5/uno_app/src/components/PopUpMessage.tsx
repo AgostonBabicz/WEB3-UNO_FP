@@ -1,27 +1,27 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 
-type PopUpMessageProps = {
+type Props = {
   show: boolean
   title: string
   message: string
+  timeoutMs?: number
   onClose: () => void
 }
 
-export const PopUpMessage: React.FC<PopUpMessageProps> = ({ show, title, message, onClose }) => {
+export const PopUpMessage: React.FC<Props> = ({ show, title, message, timeoutMs, onClose }) => {
+  useEffect(() => {
+    if (!show || !timeoutMs) return
+    const id = window.setTimeout(onClose, timeoutMs)
+    return () => clearTimeout(id)
+  }, [show, timeoutMs, onClose])
+
   if (!show) return null
 
   return (
-    <div
-      className="pop-up-message-backdrop"
-      role="dialog"
-      aria-modal="true"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose()
-      }}
-    >
-      <div className="pop-up-message" aria-live="polite">
-        <button className="close-btn" onClick={onClose} aria-label="Close popup">
-          x
+    <div className="pop-up-message-backdrop" onClick={onClose}>
+      <div className="pop-up-message" onClick={(e) => e.stopPropagation()}>
+        <button className="close-btn" onClick={onClose} aria-label="Close">
+          &times;
         </button>
         <h2>{title}</h2>
         <p>{message}</p>

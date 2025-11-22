@@ -86,3 +86,69 @@ export type HandUpdatePayload = {
   myHand: Card[]
   playable: number[]
 }
+
+export type GameEventsResponse = {
+  gameEvents: GraphQlGameEvent 
+}
+
+export type GameUpdatesResponse = {
+  gameUpdates: GraphQlGame
+}
+
+export type JoinLobbyPayload = { 
+  id: string
+  myName: string 
+}
+
+export type CreateLobbyOpts = {
+  meName: string
+  targetScore?: number
+  cardsPerPlayer?: number
+}
+
+export type LoginCreds = { username: string; password: string }
+
+export type PlayCardArgs = {
+  cardIndex: number
+  askedColor?: Color
+}
+
+export type RefreshHandData = {
+  myHand: Card[]
+  playable: number[]
+}
+
+export type RegisterCreds = { username: string; password: string }
+
+// game events
+export interface GraphQlNotice {
+  __typename: 'Notice'
+  gameId: string
+  title: string
+  message: string
+  at: string
+}
+
+export interface GraphQlPlayerJoined { __typename: 'PlayerJoined'; playerIndex: number; player: GraphQlPlayer }
+export interface GraphQlGameStarted { __typename: 'GameStarted'; game: GraphQlGame }
+export interface GraphQlTurnChanged { __typename: 'TurnChanged'; playerInTurnIndex: number }
+export interface GraphQlCardPlayed { __typename: 'CardPlayed'; playerIndex: number; card: GraphQlCard; askedColor?: string | null }
+export interface GraphQlCardDrawn { __typename: 'CardDrawn'; playerIndex: number; drew: number }
+export interface GraphQlUnoSaid { __typename: 'UnoSaid'; playerIndex: number }
+export interface GraphQlUnoAccusationResult { __typename: 'UnoAccusationResult'; accuserIndex: number; accusedIndex: number; success: boolean }
+export interface GraphQlRoundEnded { __typename: 'RoundEnded'; winnerIndex: number; pointsAwarded: number; scores: number[] }
+export interface GraphQlGameEnded { __typename: 'GameEnded'; winnerIndex: number; scores: number[] }
+export interface GraphQlGameUpdated { __typename: 'GameUpdated'; game: GraphQlGame }
+
+export type GraphQlGameEvent =
+  | GraphQlPlayerJoined
+  | GraphQlGameStarted
+  | GraphQlTurnChanged
+  | GraphQlCardPlayed
+  | GraphQlCardDrawn
+  | GraphQlUnoSaid
+  | GraphQlUnoAccusationResult
+  | GraphQlRoundEnded
+  | GraphQlGameEnded
+  | GraphQlGameUpdated
+  | GraphQlNotice
