@@ -24,7 +24,7 @@ import StartRoundThunk from '../thunks/StartRoundThunk'
 import { subscribeToGameUpdates } from '../thunks/GameUpdatesThunk'
 import { subscribeToGameEvents } from '../thunks/GameEventsThunk'
 import RefreshMyHandThunk from '../thunks/RefreshHandThunk'
-import { PopUpMessage } from 'src/components/PopUpMessage'
+import { PopUpMessage } from '@/src/components/PopUpMessage'
 
 const GameServerView: React.FC = () => {
   const dispatch = useAppDispatch()
