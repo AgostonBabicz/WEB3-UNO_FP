@@ -1,0 +1,34 @@
+{
+  "name": "uno_ssr",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@apollo/client": "^4.0.9",
+    "@reduxjs/toolkit": "^2.10.1",
+    "cookies-next": "^6.1.1",
+    "@uno/domain": "file:../../domain",
+    "graphql": "^16.12.0",
+    "graphql-ws": "^6.0.6",
+    "immer": "^10.2.0",
+    "lodash": "^4.17.21",
+    "next": "16.0.3",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "react-redux": "^9.2.0",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.0.3",
+    "typescript": "^5"
+  }
+}
