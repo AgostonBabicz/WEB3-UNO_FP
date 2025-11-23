@@ -28,16 +28,30 @@ export const ADD_PLAYER = gql`
   mutation AddPlayer($gameId: UUID!, $name: String!, $userId: UUID!) {
     addPlayer(gameId: $gameId, name: $name, userId: $userId) {
       id
-      players {
-        id
-        name
-        handCount
-        score
+    createdAt
+    targetScore
+    cardsPerPlayer
+    players {
+      id
+      name
+      handCount
+      score
+      saidUno
+    }
+    currentRound {
+      id
+      playerInTurnIndex
+      discardTop {
+        type
+        color
+        number
       }
-      currentRound {
-        id
-        playerInTurnIndex
-      }
+      drawPileSize
+      currentColor
+      direction
+      hasEnded
+    }
+    winnerIndex
     }
   }
 `
@@ -46,25 +60,30 @@ export const START_ROUND = gql`
   mutation StartRound($input: StartRoundInput!) {
     startRound(input: $input) {
       id
-      currentRound {
-        id
-        playerInTurnIndex
-        discardTop {
-          type
-          color
-          number
-        }
-        drawPileSize
-        currentColor
-        direction
-        hasEnded
+    createdAt
+    targetScore
+    cardsPerPlayer
+    players {
+      id
+      name
+      handCount
+      score
+      saidUno
+    }
+    currentRound {
+      id
+      playerInTurnIndex
+      discardTop {
+        type
+        color
+        number
       }
-      players {
-        name
-        handCount
-        score
-        saidUno
-      }
+      drawPileSize
+      currentColor
+      direction
+      hasEnded
+    }
+    winnerIndex
     }
   }
 `
@@ -73,25 +92,30 @@ export const PLAY_CARD = gql`
   mutation PlayCard($input: PlayCardInput!) {
     playCard(input: $input) {
       id
-      currentRound {
-        id
-        playerInTurnIndex
-        discardTop {
-          type
-          color
-          number
-        }
-        drawPileSize
-        currentColor
-        direction
-        hasEnded
+    createdAt
+    targetScore
+    cardsPerPlayer
+    players {
+      id
+      name
+      handCount
+      score
+      saidUno
+    }
+    currentRound {
+      id
+      playerInTurnIndex
+      discardTop {
+        type
+        color
+        number
       }
-      players {
-        name
-        handCount
-        score
-        saidUno
-      }
+      drawPileSize
+      currentColor
+      direction
+      hasEnded
+    }
+    winnerIndex
     }
   }
 `
@@ -100,20 +124,30 @@ export const DRAW_CARD = gql`
   mutation DrawCard($input: DrawCardInput!) {
     drawCard(input: $input) {
       id
-      currentRound {
-        id
-        playerInTurnIndex
-        drawPileSize
-        discardTop {
-          type
-          color
-          number
-        }
+    createdAt
+    targetScore
+    cardsPerPlayer
+    players {
+      id
+      name
+      handCount
+      score
+      saidUno
+    }
+    currentRound {
+      id
+      playerInTurnIndex
+      discardTop {
+        type
+        color
+        number
       }
-      players {
-        name
-        handCount
-      }
+      drawPileSize
+      currentColor
+      direction
+      hasEnded
+    }
+    winnerIndex
     }
   }
 `
@@ -122,20 +156,30 @@ export const SAY_UNO = gql`
   mutation SayUno($input: SayUnoInput!) {
     sayUno(input: $input) {
       id
-      players {
-        name
-        saidUno
+    createdAt
+    targetScore
+    cardsPerPlayer
+    players {
+      id
+      name
+      handCount
+      score
+      saidUno
+    }
+    currentRound {
+      id
+      playerInTurnIndex
+      discardTop {
+        type
+        color
+        number
       }
-      currentRound {
-        id
-        playerInTurnIndex
-        drawPileSize
-        discardTop {
-          type
-          color
-          number
-        }
-      }
+      drawPileSize
+      currentColor
+      direction
+      hasEnded
+    }
+    winnerIndex
     }
   }
 `
@@ -144,11 +188,30 @@ export const ACCUSE_UNO = gql`
   mutation AccuseUno($input: AccuseUnoInput!) {
     accuseUno(input: $input) {
       id
-      players {
-        name
-        handCount
-        saidUno
+    createdAt
+    targetScore
+    cardsPerPlayer
+    players {
+      id
+      name
+      handCount
+      score
+      saidUno
+    }
+    currentRound {
+      id
+      playerInTurnIndex
+      discardTop {
+        type
+        color
+        number
       }
+      drawPileSize
+      currentColor
+      direction
+      hasEnded
+    }
+    winnerIndex
     }
   }
 `

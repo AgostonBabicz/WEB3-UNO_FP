@@ -19,6 +19,7 @@ import {
   deckSize
 } from '@uno/domain'
 import { persistGameCreate, persistRoundStart } from './helpers/game/persistanceFunctions'
+import { publicEncrypt } from 'crypto'
 
 export type PublishFn = (evt: any) => void
 
@@ -315,6 +316,11 @@ export function playCard(
       askedColor: askedColor ?? null,
     })
   }
+    
+
+  if(ng.winner !== undefined || ng.winner !== null) {
+    publish({ __typename: 'GameEnded', gameId: gameId, winnerIndex: ng.winner, scores: ng.scores })
+  } 
 
   const view = gameView(ng, gameId)
 

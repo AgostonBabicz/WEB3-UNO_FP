@@ -26,7 +26,7 @@ import { UnoDeck } from '@/src/components/UnoDeck'
 import { PopUpBox } from '@/src/components/PopUpBox'
 import BotTakeTurn from '@/src/thunks/BotTurnThunk'
 import { useRouter } from 'next/navigation'
-
+import { v4 as uuidv4 } from 'uuid'
 
 type GameViewProps = {
   botNumber: number
@@ -45,7 +45,7 @@ const GameView: React.FC<GameViewProps> = ({
 }) => {
   const dispatch = useAppDispatch()
   const uno = useAppSelector(selectUnoGame)
-
+  const gameId = useMemo(() => uuidv4(), [])
   const botNames = useMemo(() => ['Bot A', 'Bot B', 'Bot C'], [])
   const botCount = useMemo(() => Math.min(Math.max(botNumber || 1, 1), 3), [botNumber])
   const bots = useMemo(() => botNames.slice(0, botCount), [botNames, botCount])
@@ -134,7 +134,7 @@ const GameView: React.FC<GameViewProps> = ({
   useEffect(() => {
     if (!isGameOver) return
 
-    router.push('/game-over?winner=' + encodeURIComponent(game?.winner || 'Unknown'))
+    router.push(`/game-over/${gameId}?winner=` + encodeURIComponent(game.players[game.winner] || 'Unknown'))
   }, [isGameOver, game, players])
 
   return (

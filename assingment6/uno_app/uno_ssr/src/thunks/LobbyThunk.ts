@@ -12,7 +12,7 @@ const createLobby = (opts: CreateLobbyOpts) => async (dispatch: AppDispatch, get
   try {
     const userId = getState().auth.id
     if (!userId) throw new Error("Not authenticated")
-
+      
     const game = await api.createGame({
       players: [opts.meName],
       targetScore: opts.targetScore ?? 500,

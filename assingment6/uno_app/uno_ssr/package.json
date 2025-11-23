@@ -11,8 +11,8 @@
   "dependencies": {
     "@apollo/client": "^4.0.9",
     "@reduxjs/toolkit": "^2.10.1",
-    "cookies-next": "^6.1.1",
     "@uno/domain": "file:../../domain",
+    "cookies-next": "^6.1.1",
     "graphql": "^16.12.0",
     "graphql-ws": "^6.0.6",
     "immer": "^10.2.0",
@@ -27,6 +27,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/uuid": "^10.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.0.3",
     "typescript": "^5"

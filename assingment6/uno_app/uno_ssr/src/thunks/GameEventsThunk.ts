@@ -57,8 +57,11 @@ export const subscribeToGameEvents = (
                 break
 
             case 'GameEnded':
+                {
+                  console.log("Handling GameEnded event:", event)
                 dispatch(serverGameActions.handleGameEnded(event))
                 break
+                }
 
             case 'UnoSaid':
                dispatch(serverGameActions.setMessage({ 

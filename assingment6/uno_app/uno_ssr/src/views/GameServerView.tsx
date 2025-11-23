@@ -33,7 +33,7 @@ const GameServerView: React.FC = () => {
   const { gameId, game, meIndex } = useAppSelector(selectServerGame)
   const myHand = useAppSelector(selectServerGameMyHand)
   const playable = useAppSelector(selectServerGamePlayable)
-  const popUp = useAppSelector(selectServerGamePopUp)
+  // const popUp = useAppSelector(selectServerGamePopUp)
   const gameOver = useAppSelector(selectServerGameGameOver)
 
   const [showColorPicker, setShowColorPicker] = useState<number | null>(null)
@@ -71,7 +71,7 @@ const GameServerView: React.FC = () => {
 
   useEffect(() => {
     if (gameOver.triggered && gameOver.winner) {
-      router.push(`/game-over?winner=${encodeURIComponent(gameOver.winner)}`)
+      router.push(`/game-over/${gameId}?winner=${encodeURIComponent(gameOver.winner)}`)
       dispatch(serverGameActions.resetGameOver())
     }
   }, [gameOver.triggered, gameOver.winner, dispatch, router])

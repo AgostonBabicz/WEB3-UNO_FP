@@ -6,7 +6,7 @@ import { authActions } from '@/src/slices/authSlice'
 import { serverGameActions } from '@/src/slices/serverGameSlice'
 import { subscribeToGameUpdates } from '@/src/thunks/GameUpdatesThunk'
 import { subscribeToGameEvents } from '@/src/thunks/GameEventsThunk'
-import { AuthUser, GraphQlGame, parseGame } from '@uno/domain'
+import { AuthUser, GraphQlGame, GraphQlPlayer, parseGame } from '@uno/domain'
 
 type Props = {
   children: React.ReactNode
@@ -33,7 +33,7 @@ export default function ReduxHydrator({
     if (activeGame) {
       const domainGame = parseGame(activeGame)
       store.dispatch(serverGameActions.setGame(domainGame))
-      const meIndex = activeGame.players.findIndex((p: string) => p === user?.username)
+      const meIndex = activeGame.players.findIndex((p: GraphQlPlayer) => p.name === user?.username)
       store.dispatch(serverGameActions.setGameId({ 
           gameId: activeGame.id, 
           meIndex: meIndex !== -1 ? meIndex : 0 

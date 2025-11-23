@@ -1,3 +1,4 @@
+'use client'
 import React, { useEffect, useRef } from 'react'
 import '../style/GameOver.css'
 import { useRouter } from 'next/navigation'
@@ -13,7 +14,8 @@ type ConfettiParticle = {
   s: number
 }
 
-const GameOverView: React.FC<GameOverViewProps> = ({ winner }) => {
+const GameOverView: React.FC<GameOverViewProps> = ({  winner }) => {
+
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const confettiRef = useRef<ConfettiParticle[]>([])
   const animRef = useRef<number | null>(null)

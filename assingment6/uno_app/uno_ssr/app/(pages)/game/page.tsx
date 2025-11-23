@@ -1,17 +1,20 @@
 import GameView from "@/src/views/GameView"
 
 type Props = {
-  searchParams: { [key: string]: string | string[] | undefined }
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
-export default function Page({ searchParams }: Props) {
-  const botNumber = Number(searchParams.botNumber ?? '1') || 1
-  const playerName = typeof searchParams.playerName === 'string' ? searchParams.playerName : 'You'
-  const cardsPerPlayer = Number(searchParams.cardsPerPlayer ?? '7') || 7
-  const targetScore = Number(searchParams.targetScore ?? '500') || 500
+export default async function Page({ searchParams }: Props) {
+  const params = await searchParams
+
+  const botNumber = Number(params.botNumber ?? '1') || 1
+  const playerName =
+    typeof params.playerName === 'string' ? params.playerName : 'You'
+  const cardsPerPlayer = Number(params.cardsPerPlayer ?? '7') || 7
+  const targetScore = Number(params.targetScore ?? '500') || 500
 
   return (
-    <GameView 
+    <GameView
       botNumber={botNumber}
       playerName={playerName}
       cardsPerPlayer={cardsPerPlayer}
