@@ -331,6 +331,7 @@ export const SUB_UPDATES = gql`
   subscription GameUpdates($gameId: UUID!) {
     gameUpdates(gameId: $gameId) {
       id
+      targetScore
       winnerIndex
       players {
         id

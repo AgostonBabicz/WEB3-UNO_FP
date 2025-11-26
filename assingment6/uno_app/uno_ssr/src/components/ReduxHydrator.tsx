@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useRef } from 'react'
 import { Provider } from 'react-redux'
-import { store } from '@/src/stores/store'
+import { makeStore } from '@/src/stores/store'
 import { authActions } from '@/src/slices/authSlice'
 import { serverGameActions } from '@/src/slices/serverGameSlice'
 import { subscribeToGameUpdates } from '@/src/thunks/GameUpdatesThunk'
@@ -21,7 +21,7 @@ export default function ReduxHydrator({
   activeGame 
 }: Props) {
   const initialized = useRef<boolean | null>(null)
-
+  const store = makeStore()
   if (initialized.current === null) {
     if (user) {
       store.dispatch(authActions.authSuccess(user))
