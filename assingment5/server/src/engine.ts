@@ -2,7 +2,8 @@ import { v4 as uuid } from 'uuid'
 
 
 import type { Game, Round, Card, Color } from '@uno/domain'
-import {
+import Domain from '@uno/domain'
+const {
   createModelGame,
   applyRoundStep,
   startNewRoundModel,
@@ -17,8 +18,8 @@ import {
   roundDrawPile,
   deckTop,
   deckSize
-} from '@uno/domain'
-import { persistGameCreate, persistRoundStart } from './helpers/game/persistanceFunctions'
+} = Domain
+import { persistGameCreate, persistRoundStart } from './helpers/game/persistanceFunctions.js'
 
 export type PublishFn = (evt: any) => void
 
