@@ -1,42 +1,48 @@
 import { List } from 'immutable'
-import { Shuffler } from '../utils/random_utils';
+import { Shuffler } from '../utils/random_utils'
 
-type Type = 'NUMBERED' | 'SKIP' | 'REVERSE' | 'DRAW' | 'WILD' | 'WILD DRAW'
-const colors = ['BLUE', 'RED', 'GREEN', 'YELLOW'] as const;
-export type Color = typeof colors[number];
-const cardNumbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
-type CardNumber = typeof cardNumbers[number];
+export type Type =
+  | 'NUMBERED'
+  | 'SKIP'
+  | 'REVERSE'
+  | 'DRAW'
+  | 'WILD'
+  | 'WILD DRAW'
 
-type NumberCard  = Readonly<{ type: 'NUMBERED', color: Color, number: CardNumber }>
-type SkipCard    = Readonly<{ type: 'SKIP', color: Color }>
-type ReverseCard = Readonly<{ type: 'REVERSE', color: Color }>
-type DrawCard    = Readonly<{ type: 'DRAW', color: Color }>
 
-type SpecialCard = SkipCard | ReverseCard | DrawCard
+const colors = ['BLUE', 'RED', 'GREEN', 'YELLOW'] as const
+export type Color = (typeof colors)[number]
 
-type WildCard    = Readonly<{ type: 'WILD' | 'WILD DRAW' }>
-type ColoredCard = Readonly<NumberCard | SpecialCard>
+const cardNumbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] as const
+export type CardNumber = (typeof cardNumbers)[number]
 
-type NumKey = Extract<Type, 'NUMBERED'>
-type SpecialKey = Extract<Type, 'SKIP' | 'REVERSE' | 'DRAW'>
-type WildKey = Extract<Type, 'WILD' | 'WILD DRAW'>
-type CardMap =
-    & Record<NumKey, NumberCard>
-    & Record<SpecialKey, SpecialCard>
-    & Record<WildKey, WildCard>
 
-type TypedCard<T extends Type> = CardMap[T]
+export type NumberCard = Readonly<{type: 'NUMBERED', color: Color,number: CardNumber}>
+export type SkipCard = Readonly<{ type: 'SKIP'; color: Color }>
+export type ReverseCard = Readonly<{ type: 'REVERSE'; color: Color }>
+export type DrawCard = Readonly<{ type: 'DRAW'; color: Color }>
+
+export type SpecialCard = SkipCard | ReverseCard | DrawCard
+
+export type WildCard = Readonly<{ type: 'WILD' | 'WILD DRAW' }>
+export type ColoredCard = Readonly<NumberCard | SpecialCard>
+
+export type NumKey = Extract<Type, 'NUMBERED'>
+export type SpecialKey = Extract<Type, 'SKIP' | 'REVERSE' | 'DRAW'>
+export type WildKey = Extract<Type, 'WILD' | 'WILD DRAW'>
+export type CardMap = Record<NumKey, NumberCard> &
+  Record<SpecialKey, SpecialCard> &
+  Record<WildKey, WildCard>
+
+export type TypedCard<T extends Type> = CardMap[T]
 export type Card = Readonly<TypedCard<Type>>
 
-export function isColored(card:Card) : card is ColoredCard{
-    return card.type !== 'WILD' && card.type !== 'WILD DRAW'
+export function isColored(card: Card): card is ColoredCard {
+  return card.type !== 'WILD' && card.type !== 'WILD DRAW'
 }
-export function isWild(card: Card) : card is WildCard{
-    return card.type==='WILD'||card.type==="WILD DRAW"
+export function isWild(card: Card): card is WildCard {
+  return card.type === 'WILD' || card.type === 'WILD DRAW'
 }
-
-
-
 export class Deck<C extends Card = Card> {
     readonly cards: List<C>
 
@@ -103,7 +109,7 @@ export function createInitialDeck(): Deck {
                 cs.push({ type: 'NUMBERED', color, number: n })
             }
         }
-        for (const color of ['BLUE', 'RED', 'GREEN', 'YELLOW'] as const) {
+        for (const color of colors) {
             for (let j = 0; j < 2; j++) {
                 cs.push({ type: 'SKIP', color })
                 cs.push({ type: 'REVERSE', color })

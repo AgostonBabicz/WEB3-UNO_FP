@@ -1,7 +1,7 @@
 
 export type Updater<T> = { [K in keyof T]?: T[K] | ((prev: T[K]) => T[K]) };
 
-export function withState<T extends object>(obj: T, patch: Updater<T>): T {
+export function shallowCopy<T extends object>(obj: T, patch: Updater<T>): T {
     const next: any = { ...obj };
     for (const k in patch) {
         const v: any = (patch as any)[k];

@@ -1,35 +1,22 @@
+//ASK OLE IG PLS
 import { List } from "immutable";
 import { Card, Color, isColored } from "./deck";
 
-export class PlayerHand {
-  readonly cards: List<Card>;
+export type PlayerHand = Readonly<{
+  cards: List<Card>;
+}>;
 
-  constructor(cards: List<Card>) {
-    this.cards = cards;
-  }
+export const createHand = (cards: Card[] = []): PlayerHand =>
+  ({ cards: List(cards) });
 
-  add(card: Card): PlayerHand {
-    return new PlayerHand(this.cards.push(card));
-  }
+export const add = (hand: PlayerHand, card: Card): PlayerHand =>
+  ({ cards: hand.cards.push(card) });
 
-  remove(card: Card): PlayerHand {
-    return new PlayerHand(this.cards.remove(this.cards.indexOf(card)));
-  }
+export const remove = (hand: PlayerHand, card: Card): PlayerHand =>
+  ({ cards: hand.cards.remove(hand.cards.indexOf(card)) });
 
-  playCard(ix: number): [Card | undefined, PlayerHand] {
-    const card = this.cards.get(ix);
-    return [card, new PlayerHand(this.cards.remove(ix))];
-  }
+export const playCard = (hand: PlayerHand, index: number): [Card | undefined, PlayerHand] =>
+  [hand.cards.get(index), { cards: hand.cards.remove(index) }];
 
-  size(): number {
-    return this.cards.size;
-  }
-
-  hasColor(color: Color): boolean {
-    return this.cards.some(c => isColored(c) && c.color === color);
-  }
-
-  toArray(): readonly Card[] {
-    return this.cards.toArray();
-  }
-}
+export const toCardsArray = (hand: PlayerHand): readonly Card[] =>
+  hand.cards.toArray();
