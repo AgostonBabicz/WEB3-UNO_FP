@@ -1,7 +1,6 @@
 import { describe, it, test, expect } from '@jest/globals'
 import { createRound, createInitialDeck } from '../utils/test_adapter'
 import {
-  Round,
   canPlay,
   catchUnoFailure,
   sayUno,
@@ -12,7 +11,8 @@ import {
   winner,
   canPlayAny,
   score,
-} from '../../src/models/round'
+  Round,
+} from '../../src/model/round'
 import {
   deterministicShuffle,
   shuffleBuilder,
@@ -20,6 +20,7 @@ import {
 } from '../utils/shuffling'
 import * as _ from 'lodash'
 import { standardShuffler } from '../../src/utils/random_utils'
+import { toCardsArray } from '../../src/model/player_hand'
 
 describe('catching failure to say "UNO!"', () => {
   const builder = shuffleBuilder({ players: 4, cardsPerPlayer: 2 })
@@ -68,10 +69,10 @@ describe('catching failure to say "UNO!"', () => {
       })
     )
     test('set up is as expected', () => {
-      expect(round.playerHands.get(0)?.size()).toEqual(2)
-      expect(round.playerHands.get(1)?.size()).toEqual(3)
-      expect(round.playerHands.get(2)?.size()).toEqual(3)
-      expect(round.playerHands.get(3)?.size()).toEqual(3)
+      expect(toCardsArray(round.playerHands.get(0)!).length).toEqual(2)
+      expect(toCardsArray(round.playerHands.get(1)!).length).toEqual(3)
+      expect(toCardsArray(round.playerHands.get(2)!).length).toEqual(3)
+      expect(toCardsArray(round.playerHands.get(3)!).length).toEqual(3)
       expect(round.playerInTurn).toEqual(0)
       expect(canPlay(0, round)).toBeTruthy()
     })
@@ -87,7 +88,7 @@ describe('catching failure to say "UNO!"', () => {
         _.partial(play, 0, undefined),
         _.partial(catchUnoFailure, { accuser: 1, accused: 0 }),
       ])(round)
-      expect(res.playerHands.get(0)?.size()).toEqual(5)
+      expect(toCardsArray(res.playerHands.get(0)!).length).toEqual(5)
     })
     it('takes the added cards from the draw pile', () => {
       const drawPileSize = round.drawDeck.size
@@ -185,10 +186,10 @@ describe('catching failure to say "UNO!"', () => {
       })
     )
     test('set up is as expected', () => {
-      expect(round.playerHands.get(0)?.size()).toEqual(2)
-      expect(round.playerHands.get(1)?.size()).toEqual(3)
-      expect(round.playerHands.get(2)?.size()).toEqual(3)
-      expect(round.playerHands.get(3)?.size()).toEqual(1)
+      expect(toCardsArray(round.playerHands.get(0)!).length).toEqual(2)
+      expect(toCardsArray(round.playerHands.get(1)!).length).toEqual(3)
+      expect(toCardsArray(round.playerHands.get(2)!).length).toEqual(3)
+      expect(toCardsArray(round.playerHands.get(3)!).length).toEqual(1)
       expect(round.playerInTurn).toEqual(0)
       expect(canPlay(0, round)).toBeTruthy()
       expect(round.drawDeck.size).toEqual(2)
@@ -196,11 +197,11 @@ describe('catching failure to say "UNO!"', () => {
     })
     test('adding 4 cards to the hand shuffles the draw pile if necessary', () => {
       const res = play(0, undefined, round)
-      expect(res.playerHands.get(0)?.size()).toBe(1)
+      expect(toCardsArray(res.playerHands.get(0)!).length).toBe(1)
       expect(res.drawDeck.size).toEqual(2)
       expect(res.discardDeck.size).toEqual(4)
       const final = catchUnoFailure({ accuser: 1, accused: 0 }, res)
-      expect(final.playerHands.get(0)?.size()).toBe(5)
+      expect(toCardsArray(final.playerHands.get(0)!).length).toBe(5)
       expect(final.drawDeck.size).toEqual(1)
       expect(final.discardDeck.size).toEqual(1)
     })
@@ -224,10 +225,10 @@ describe('catching failure to say "UNO!"', () => {
       })
     )
     test('set up is as expected', () => {
-      expect(round.playerHands.get(0)?.size()).toEqual(2)
-      expect(round.playerHands.get(1)?.size()).toEqual(3)
-      expect(round.playerHands.get(2)?.size()).toEqual(3)
-      expect(round.playerHands.get(3)?.size()).toEqual(2)
+      expect(toCardsArray(round.playerHands.get(0))!.length).toEqual(2)
+      expect(toCardsArray(round.playerHands.get(1))!.length).toEqual(3)
+      expect(toCardsArray(round.playerHands.get(2))!.length).toEqual(3)
+      expect(toCardsArray(round.playerHands.get(3))!.length).toEqual(2)
       expect(round.playerInTurn).toEqual(3)
       expect(canPlay(0, round)).toBeTruthy()
       const res = play(0, undefined, round)
@@ -467,7 +468,7 @@ describe('score', () => {
     expect(score(round)).toEqual(50)
   })
   it('has the value 50 if the opponent holds a wild draw card', () => {
-    builder.hand(1).is({ type: 'WILD_DRAW' })
+    builder.hand(1).is({ type: 'WILD DRAW' })
     const shuffler = builder.build()
     const round = play(
       0,
@@ -483,7 +484,7 @@ describe('score', () => {
   })
   it('adds the cards if the opponent have more than one card', () => {
     builder.hand(0).is({ color: 'BLUE', type: 'DRAW' })
-    builder.hand(1).is({ type: 'WILD_DRAW' })
+    builder.hand(1).is({ type: 'WILD DRAW' })
     builder.drawPile().is({ number: 5 }, { type: 'REVERSE' })
     const shuffler = builder.build()
     const round = play(
@@ -496,7 +497,7 @@ describe('score', () => {
         cardsPerPlayer: 1,
       })
     )
-    expect(round.playerHands.get(1)?.size()).toEqual(3)
+    expect(toCardsArray(round.playerHands.get(1)!).length).toEqual(3)
     expect(score(round)).toEqual(75)
   })
   it('adds the cards of all opponents if there are more than 2 players', () => {
@@ -506,7 +507,7 @@ describe('score', () => {
       .hand(0)
       .is({ color: 'BLUE', type: 'DRAW' })
       .hand(1)
-      .is({ type: 'WILD_DRAW' })
+      .is({ type: 'WILD DRAW' })
       .hand(2)
       .is({ number: 7 })
       .hand(3)

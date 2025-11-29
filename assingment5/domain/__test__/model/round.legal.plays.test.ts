@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from '@jest/globals'
 import { createRound } from '../utils/test_adapter'
-import { Round,canPlay, play } from '../../src/models/round'
+import { canPlay, play, Round } from '../../src/model/round'
 import { shuffleBuilder } from '../utils/shuffling'
 
 describe('Legal plays', () => {
@@ -438,7 +438,7 @@ describe('Legal plays', () => {
         .discard()
         .is({ type: 'NUMBERED', color: 'GREEN' })
         .hand(0)
-        .is({ type: 'WILD_DRAW' }, { color: 'GREEN' })
+        .is({ type: 'WILD DRAW' }, { color: 'GREEN' })
         .build()
       const round = createRound({
         players: ['a', 'b', 'c', 'd'],
@@ -452,7 +452,7 @@ describe('Legal plays', () => {
         .discard()
         .is({ type: 'NUMBERED', color: 'GREEN', number: 2 })
         .hand(0)
-        .is({ type: 'WILD_DRAW' })
+        .is({ type: 'WILD DRAW' })
         .is({ type: 'NUMBERED', color: 'BLUE', number: 0 })
         .is({ type: 'NUMBERED', color: 'RED', number: 3 })
         .is({ type: 'NUMBERED', color: 'YELLOW', number: 7 })
@@ -472,7 +472,7 @@ describe('Legal plays', () => {
         .discard()
         .is({ type: 'NUMBERED', color: 'GREEN', number: 3 })
         .hand(0)
-        .is({ type: 'WILD_DRAW' })
+        .is({ type: 'WILD DRAW' })
         .is({ type: 'NUMBERED', color: 'RED', number: 3 })
         .repeat(5)
         .isnt({ color: 'GREEN' })
@@ -489,7 +489,7 @@ describe('Legal plays', () => {
         .discard()
         .is({ type: 'DRAW', color: 'GREEN' })
         .hand(1)
-        .is({ type: 'WILD_DRAW' })
+        .is({ type: 'WILD DRAW' })
         .is({ type: 'DRAW', color: 'RED' })
         .repeat(5)
         .isnt({ color: 'GREEN' })
@@ -506,7 +506,7 @@ describe('Legal plays', () => {
         .discard()
         .is({ type: 'SKIP', color: 'GREEN' })
         .hand(1)
-        .is({ type: 'WILD_DRAW' })
+        .is({ type: 'WILD DRAW' })
         .is({ type: 'SKIP', color: 'RED' })
         .repeat(5)
         .isnt({ color: 'GREEN' })
@@ -523,7 +523,7 @@ describe('Legal plays', () => {
         .discard()
         .is({ type: 'REVERSE', color: 'GREEN' })
         .hand(2)
-        .is({ type: 'WILD_DRAW' })
+        .is({ type: 'WILD DRAW' })
         .is({ type: 'REVERSE', color: 'RED' })
         .repeat(5)
         .isnt({ color: 'GREEN' })
@@ -540,7 +540,7 @@ describe('Legal plays', () => {
         .discard()
         .is({ type: 'NUMBERED', color: 'GREEN' })
         .hand(0)
-        .is({ type: 'WILD_DRAW' })
+        .is({ type: 'WILD DRAW' })
         .is({ type: 'WILD' })
         .repeat(5)
         .isnt({ color: 'GREEN' })
@@ -599,7 +599,7 @@ describe('Legal plays', () => {
     it("is legal to play a wild draw 4 card if hand doesn't contain the selected color", () => {
       const shuffler = builder
         .hand(1)
-        .is({ type: 'WILD_DRAW' })
+        .is({ type: 'WILD DRAW' })
         .repeat(6)
         .isnt({ color: 'GREEN' })
         .build()
@@ -614,7 +614,7 @@ describe('Legal plays', () => {
     it('is illegal to play a wild draw 4 card if hand contains the selected color', () => {
       const shuffler = builder
         .hand(1)
-        .is({ type: 'WILD_DRAW' })
+        .is({ type: 'WILD DRAW' })
         .is({ color: 'GREEN' })
         .build()
       let round = createRound({

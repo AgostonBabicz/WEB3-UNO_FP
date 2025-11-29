@@ -7,11 +7,12 @@ import {
   successiveShufflers,
 } from '../utils/shuffling'
 import * as _ from 'lodash'
-import { Round } from '../../src/models/round'
+import { Round } from '../../src/model/round'
+import { toCardsArray } from '../../src/model/player_hand'
 
 const normalShuffle = shuffleBuilder()
   .discard()
-  .isnt({ type: ['DRAW', 'REVERSE', 'SKIP', 'WILD', 'WILD_DRAW'] })
+  .isnt({ type: ['DRAW', 'REVERSE', 'SKIP', 'WILD', 'WILD DRAW'] })
   .build()
 
 describe('Round set up', () => {
@@ -53,7 +54,7 @@ describe('Round set up', () => {
     expect(mockShuffler).toBeCalledTimes(1)
   })
   it('deals 7 cards to each player', () => {
-    round.playerHands.forEach((hand) => expect(hand.size()).toEqual(7))
+    round.playerHands.forEach((hand) => expect(toCardsArray(hand).length).toEqual(7))
   })
   it('deals 7 cards to each player from the top of the deck', () => {
     const cards = normalShuffle(initialDeck.toArray())
@@ -63,7 +64,7 @@ describe('Round set up', () => {
       shuffler: deterministicShuffle(cards),
     })
     round.playerHands.forEach((hand, playerIndex) =>
-      expect(hand.getPlayerHand().toArray()).toEqual(
+      expect(toCardsArray(hand)).toEqual(
         cards.slice(7 * playerIndex, 7 * (playerIndex + 1))
       )
     )
@@ -83,7 +84,7 @@ describe('Round set up', () => {
       .build()
     const wildNotOnTop = shuffleBuilder()
       .top()
-      .isnt({ type: ['WILD', 'WILD_DRAW'] })
+      .isnt({ type: ['WILD', 'WILD DRAW'] })
       .build()
     const mockShuffler = jest.fn(wildNotOnTop)
     const shuffler = successiveShufflers(wildOnDiscardTop, mockShuffler)
@@ -98,7 +99,7 @@ describe('Round set up', () => {
     const wildOnTop = shuffleBuilder().top().is({ type: 'WILD' }).build()
     const wildNotOnTop = shuffleBuilder()
       .top()
-      .isnt({ type: ['WILD', 'WILD_DRAW'] })
+      .isnt({ type: ['WILD', 'WILD DRAW'] })
       .build()
     const mockShuffler = jest.fn(wildNotOnTop)
     const shuffler = successiveShufflers(
@@ -112,11 +113,11 @@ describe('Round set up', () => {
   it('reshuffles if the top of the discard pile is a wild draw 4 card', () => {
     const wildDrawOnDiscardTop = shuffleBuilder()
       .discard()
-      .is({ type: 'WILD_DRAW' })
+      .is({ type: 'WILD DRAW' })
       .build()
     const wildNotOnTop = shuffleBuilder()
       .top()
-      .isnt({ type: ['WILD', 'WILD_DRAW'] })
+      .isnt({ type: ['WILD', 'WILD DRAW'] })
       .build()
     const mockShuffler = jest.fn(wildNotOnTop)
     const shuffler = successiveShufflers(wildDrawOnDiscardTop, mockShuffler)
@@ -176,6 +177,6 @@ describe('Before first action in round', () => {
       dealer: 1,
       shuffler,
     })
-    expect(round.playerHands.get(2)!.size()).toBe(9)
+    expect(toCardsArray(round.playerHands.get(2)!).length).toBe(9)
   })
 })

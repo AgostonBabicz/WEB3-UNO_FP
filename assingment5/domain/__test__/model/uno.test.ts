@@ -1,10 +1,9 @@
 import { describe, it, test, expect } from '@jest/globals'
 import { createGame } from '../utils/test_adapter'
 import { shuffleBuilder, successiveShufflers } from '../utils/shuffling'
-import { play } from '../../src/models/uno'
-import * as Round from '../../src/models/round'
+import { Game, play } from '../../src/model/uno'
+import * as Round from '../../src/model/round'
 import * as _ from 'lodash'
-import { Game } from '../../src/models/uno'
 
 describe('Game set up', () => {
   const game: Game = createGame({
@@ -63,7 +62,7 @@ const firstShuffle = shuffleBuilder({ players: 4, cardsPerPlayer: 1 })
   .hand(1)
   .is({ number: 8 })
   .hand(2)
-  .is({ type: 'WILD_DRAW' })
+  .is({ type: 'WILD DRAW' })
   .hand(3)
   .is({ number: 3 })
   .drawPile()
@@ -119,7 +118,7 @@ const secondShuffle = shuffleBuilder({ players: 4, cardsPerPlayer: 1 })
   .hand(2)
   .is({ color: 'GREEN', type: 'DRAW' })
   .hand(3)
-  .is({ type: 'WILD_DRAW' })
+  .is({ type: 'WILD DRAW' })
   .drawPile()
   .is({ type: 'NUMBERED', color: 'RED', number: 0 })
   .build()
@@ -159,7 +158,7 @@ const thirdShuffle = shuffleBuilder({ players: 4, cardsPerPlayer: 1 })
   .hand(0)
   .is({ color: 'BLUE', type: 'DRAW' })
   .hand(1)
-  .is({ type: 'WILD_DRAW' })
+  .is({ type: 'WILD DRAW' })
   .hand(2)
   .is({ type: 'SKIP', color: 'GREEN' })
   .hand(3)
