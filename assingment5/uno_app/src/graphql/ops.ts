@@ -28,6 +28,7 @@ export const ADD_PLAYER = gql`
   mutation AddPlayer($gameId: UUID!, $name: String!, $userId: UUID!) {
     addPlayer(gameId: $gameId, name: $name, userId: $userId) {
       id
+      targetScore
       players {
         id
         name
@@ -46,6 +47,7 @@ export const START_ROUND = gql`
   mutation StartRound($input: StartRoundInput!) {
     startRound(input: $input) {
       id
+      targetScore
       currentRound {
         id
         playerInTurnIndex
@@ -73,6 +75,7 @@ export const PLAY_CARD = gql`
   mutation PlayCard($input: PlayCardInput!) {
     playCard(input: $input) {
       id
+      targetScore
       currentRound {
         id
         playerInTurnIndex
@@ -100,6 +103,7 @@ export const DRAW_CARD = gql`
   mutation DrawCard($input: DrawCardInput!) {
     drawCard(input: $input) {
       id
+      targetScore
       currentRound {
         id
         playerInTurnIndex
@@ -122,8 +126,10 @@ export const SAY_UNO = gql`
   mutation SayUno($input: SayUnoInput!) {
     sayUno(input: $input) {
       id
+      targetScore
       players {
         name
+        handCount
         saidUno
       }
       currentRound {
@@ -283,6 +289,7 @@ export const SUB_UPDATES = gql`
   subscription GameUpdates($gameId: UUID!) {
     gameUpdates(gameId: $gameId) {
       id
+      targetScore
       winnerIndex
       players {
         id
