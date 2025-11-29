@@ -1,8 +1,8 @@
 import { SQL as sql } from 'sql-template-strings'
-import { AuthenticateUserInput, CreateUserInput, GetUserInput } from '../inputs/userInputs'
-import { query } from '../utils/pg'
-import { CRUD } from './interface/crud'
-import { verifyPassword } from '../helpers/auth/verifyPassword'
+import { AuthenticateUserInput, CreateUserInput, GetUserInput } from '../inputs/userInputs.js'
+import { query } from '../utils/pg.js'
+import { CRUD } from './interface/crud.js'
+import { verifyPassword } from '../helpers/auth/verifyPassword.js'
 
 export class UserRepository implements CRUD<UserRepository> {
   id: string

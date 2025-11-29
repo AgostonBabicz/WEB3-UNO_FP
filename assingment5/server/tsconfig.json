@@ -1,17 +1,18 @@
 {
   "compilerOptions": {
+    "lib": ["es2023"],
     "strict": false,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "preserveConstEnums": true,
-    "module": "commonjs",
-    "target": "ESNext",
+    "module": "NodeNext",
+    "target": "es2022",
     "baseUrl": "./",
     "paths": {
       "@uno/domain": ["../domain/src/index.ts"],
       "@uno/domain/*": ["../domain/src/*"]
     },
-    "outDir": ".build",
+    "outDir": "./dist/",
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "emitDecoratorMetadata": true,
@@ -19,10 +20,10 @@
     "sourceMap": false,
     "inlineSourceMap": false,
     "rootDirs": ["./src", "../domain/src"],
-    "typeRoots": ["node_modules/@types", "types", "@types/node"],
+    "typeRoots": ["./node_modules/@types"],
     "types": ["node"],
-    "moduleResolution": "node"
+    "moduleResolution": "NodeNext"
   },
-  "include": ["src", "../domain/src"],
+  "include": ["src", "./domain/src"],
   "exclude": ["node_modules"]
 }
