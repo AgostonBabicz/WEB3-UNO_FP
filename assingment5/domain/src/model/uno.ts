@@ -37,7 +37,7 @@ export function createGame(props: Partial<Props>): Game {
   const randomizer: Randomizer = props.randomizer ?? standardRandomizer
   const shuffler: Shuffler<Card> = props.shuffler ?? standardShuffler
 
-  if (players.length < 2) throw new Error('A Game requires at least 2 players')
+  // if (players.length < 2) throw new Error('A Game requires at least 2 players')
   if (targetScore <= 0)
     throw new Error('A Game requires a target score of more than 0')
   if (cardsPerPlayer <= 0)
@@ -47,19 +47,19 @@ export function createGame(props: Partial<Props>): Game {
   const scores: ReadonlyArray<number> = Array(playerCount).fill(0)
 
   const dealer = randomizer(playerCount)
-  const currentRound = createRound(
-    [...players],
-    dealer,
-    shuffler,
-    cardsPerPlayer
-  )
+  // const currentRound = createRound(
+  //   [...players],
+  //   dealer,
+  //   shuffler,
+  //   cardsPerPlayer
+  // )
 
   return {
     playerCount,
     targetScore,
     players,
     scores,
-    currentRound,
+    currentRound:undefined,
     randomizer,
     shuffler,
     cardsPerPlayer,

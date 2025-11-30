@@ -315,6 +315,9 @@ export function playCard(
       askedColor: askedColor ?? null,
     })
   }
+  if(ng.winner !== undefined || ng.winner !== null) {
+    publish({ __typename: 'GameEnded', gameId: gameId, winnerIndex: ng.winner, scores: ng.scores })
+  } 
 
   const view = gameView(ng, gameId)
 

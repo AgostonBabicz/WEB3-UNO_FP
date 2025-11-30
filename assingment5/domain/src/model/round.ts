@@ -49,7 +49,7 @@ function wrapRound(
   shuffler: Shuffler<Card>,
   cardsPerPlay: number
 ): Round {
-  if (players.length < 2) throw new Error("A Round requires at least 2 players")
+  // if (players.length < 2) throw new Error("A Round requires at least 2 players")
   if (players.length > 10) throw new Error("A Round allows at most 10 players")
 
   let drawDeck = createInitialDeck();
