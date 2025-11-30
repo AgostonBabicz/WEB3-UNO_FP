@@ -1,7 +1,7 @@
 'use client'
-import { useEffect, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { Provider } from 'react-redux'
-import { makeStore } from '@/src/stores/store'
+import { AppStore, makeStore } from '@/src/stores/store'
 import { authActions } from '@/src/slices/authSlice'
 import { serverGameActions } from '@/src/slices/serverGameSlice'
 import { subscribeToGameUpdates } from '@/src/thunks/GameUpdatesThunk'
@@ -14,34 +14,49 @@ type Props = {
   waitingGames?: GraphQlGame[]
   activeGame?: GraphQlGame
 }
+const createHydratedStore = (
+  user: AuthUser | undefined, 
+  waitingGames: GraphQlGame[] | undefined, 
+  activeGame: GraphQlGame | undefined
+): AppStore => {
+  
+  const store = makeStore()
+  
+  // Hydration Logic (identical to your old 'if (initialized.current === null)' block)
+  if (user) {
+    store.dispatch(authActions.authSuccess(user))
+  }
+  if (waitingGames) {
+    const domainGames = waitingGames.map(g => parseGame(g))
+    store.dispatch(serverGameActions.setWaitingGames(domainGames))
+  }
+  if (activeGame) {
+    const domainGame = parseGame(activeGame)
+    store.dispatch(serverGameActions.setGame(domainGame))
+    const meIndex = activeGame.players.findIndex((p: GraphQlPlayer) => p.name === user?.username)
+    store.dispatch(serverGameActions.setGameId({ 
+        gameId: activeGame.id, 
+        meIndex: meIndex !== -1 ? meIndex : 0 
+    }))
+  }
+  
+  return store
+}
 export default function ReduxHydrator({ 
   children, 
   user, 
   waitingGames,
   activeGame 
 }: Props) {
-  const initialized = useRef<boolean | null>(null)
-  const store = makeStore()
-  if (initialized.current === null) {
-    if (user) {
-      store.dispatch(authActions.authSuccess(user))
-    }
-    if (waitingGames) {
-      const domainGames = waitingGames.map(g => parseGame(g))
-      store.dispatch(serverGameActions.setWaitingGames(domainGames))
-    }
-    if (activeGame) {
-      const domainGame = parseGame(activeGame)
-      store.dispatch(serverGameActions.setGame(domainGame))
-      const meIndex = activeGame.players.findIndex((p: GraphQlPlayer) => p.name === user?.username)
-      store.dispatch(serverGameActions.setGameId({ 
-          gameId: activeGame.id, 
-          meIndex: meIndex !== -1 ? meIndex : 0 
-      }))
-    }
-    initialized.current = true
-  }
+  
+  // 1. 🔑 FIX: useState with a function initializer runs ONLY ONCE.
+  // This creates the store and hydrates it on the server, and preserves
+  // that *same instance* across all client re-renders.
+  const [store] = useState(() => 
+    createHydratedStore(user, waitingGames, activeGame)
+  )
 
+  // 2. The subscription logic is now safe because 'store' is stable.
   useEffect(() => {
     let updatesSub: { unsubscribe: () => void } | undefined
     let eventsSub: { unsubscribe: () => void } | undefined
@@ -56,7 +71,7 @@ export default function ReduxHydrator({
       if (updatesSub && 'unsubscribe' in updatesSub) updatesSub.unsubscribe()
       if (eventsSub && 'unsubscribe' in eventsSub) eventsSub.unsubscribe()
     }
-  }, [])
+  }, [store])
 
   return (
     <Provider store={store}>

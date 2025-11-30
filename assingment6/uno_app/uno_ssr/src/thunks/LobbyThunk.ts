@@ -19,7 +19,7 @@ const createLobby = (opts: CreateLobbyOpts) => async (dispatch: AppDispatch, get
       cardsPerPlayer: opts.cardsPerPlayer ?? 7,
       userId,
     })
-
+    console.log(game)
     if (!game) throw new Error('createGame failed')
 
     dispatch(serverGameActions.setGameId({ 

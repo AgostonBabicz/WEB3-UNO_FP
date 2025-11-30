@@ -70,6 +70,7 @@ const GameServerView: React.FC = () => {
   }, [])
 
   useEffect(() => {
+    console.log("WE HAVE A WINNER")
     if (gameOver.triggered && gameOver.winner) {
       router.push(`/game-over/${gameId}?winner=${encodeURIComponent(gameOver.winner)}`)
       dispatch(serverGameActions.resetGameOver())

@@ -1,27 +1,35 @@
+
+import {
+  Randomizer,
+  Shuffler,
+  standardRandomizer,
+  standardShuffler,
+} from '../utils/random_utils'
 import { Card } from './deck'
-import { Randomizer, Shuffler, standardRandomizer, standardShuffler } from '../utils/random_utils'
-import { Round,createRound, winner, score } from './round'
+import { createRound, winner, score, Round } from './round'
 
 type RoundStep = (r: Round) => Round
+
 export type Game = Readonly<{
-  playerCount: number
-  targetScore: number
-  players: ReadonlyArray<string>
-  scores: ReadonlyArray<number>
-  currentRound: Round | undefined
-  randomizer: Randomizer
-  shuffler: Shuffler<Card>
-  cardsPerPlayer: number
-  winner: number | undefined
+  readonly playerCount: number
+  readonly targetScore: number
+  readonly players: ReadonlyArray<string>
+  readonly scores: ReadonlyArray<number>
+  readonly currentRound: Round | undefined
+  readonly randomizer: Randomizer
+  readonly shuffler: Shuffler<Card>
+  readonly cardsPerPlayer: number
+  readonly winner: number | undefined // index, not name
 }>
 
-export type Props = {
-  players: string[]
-  targetScore: number
-  cardsPerPlayer: number
-  randomizer: Randomizer
-  shuffler: Shuffler<Card>
-}
+export type Props = Readonly<{
+  readonly players: ReadonlyArray<string>
+  readonly targetScore: number
+  readonly randomizer: Randomizer
+  readonly shuffler: Shuffler<Card>
+  readonly cardsPerPlayer: number
+}>
+
 export function createGame(props: Partial<Props>): Game {
   const players = props.players ?? ['A', 'B']
   const targetScore = props.targetScore ?? 500
@@ -29,20 +37,29 @@ export function createGame(props: Partial<Props>): Game {
   const randomizer: Randomizer = props.randomizer ?? standardRandomizer
   const shuffler: Shuffler<Card> = props.shuffler ?? standardShuffler
 
-  if (targetScore <= 0) throw new Error('A Game requires a target score of more than 0')
-  if (cardsPerPlayer <= 0) throw new Error('A Game requires dealing at least 1 card per player')
+  // if (players.length < 2) throw new Error('A Game requires at least 2 players')
+  if (targetScore <= 0)
+    throw new Error('A Game requires a target score of more than 0')
+  if (cardsPerPlayer <= 0)
+    throw new Error('A Game requires dealing at least 1 card per player')
 
   const playerCount = players.length
   const scores: ReadonlyArray<number> = Array(playerCount).fill(0)
 
   const dealer = randomizer(playerCount)
+  // const currentRound = createRound(
+  //   [...players],
+  //   dealer,
+  //   shuffler,
+  //   cardsPerPlayer
+  // )
 
   return {
     playerCount,
     targetScore,
     players,
     scores,
-    currentRound: undefined,
+    currentRound:undefined,
     randomizer,
     shuffler,
     cardsPerPlayer,
@@ -51,7 +68,8 @@ export function createGame(props: Partial<Props>): Game {
 }
 
 export function player(ix: number, g: Game): string {
-  if (ix < 0 || ix >= g.playerCount) throw new Error('Player index is out of bounds')
+  if (ix < 0 || ix >= g.playerCount)
+    throw new Error('Player index is out of bounds')
   return g.players[ix]
 }
 
@@ -81,6 +99,11 @@ export function play(step: RoundStep, g: Game): Game {
 
 export function startNewRound(g: Game): Game {
   const dealer = g.randomizer(g.playerCount)
-  const newRound = createRound([...g.players], dealer, g.shuffler, g.cardsPerPlayer)
+  const newRound = createRound(
+    [...g.players],
+    dealer,
+    g.shuffler,
+    g.cardsPerPlayer
+  )
   return { ...g, currentRound: newRound }
 }

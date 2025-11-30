@@ -1,7 +1,7 @@
 import { describe, it, expect } from '@jest/globals'
 import { createInitialDeck } from '../utils/test_adapter'
 import * as _ from 'lodash'
-import { Card } from '../../src/models/deck'
+import { Card } from '../../src'
 
 describe('Initial deck', () => {
   const initialDeck = createInitialDeck()
@@ -38,7 +38,7 @@ describe('Initial deck', () => {
     )
     const numberedCardsByColor = _.groupBy(
       numberedDeck.toArray(),
-      (card) => (card as any).color
+      (card) => card.color
     )
     _.forEach(numberedCardsByColor, (cards) => {
       const cardsByNumber = _.groupBy(cards, (card) => card.number)
@@ -55,7 +55,7 @@ describe('Initial deck', () => {
     const skipCards = initialDeck.filter((card: Card) => card.type === 'SKIP')
     const skipCardsByColor = _.groupBy(
       skipCards.toArray(),
-      (card) => (card as any).color
+      (card) => card.color
     )
     _.forEach(skipCardsByColor, (cards) => expect(cards.length).toEqual(2))
   })
@@ -68,7 +68,7 @@ describe('Initial deck', () => {
     )
     const reverseCardsByColor = _.groupBy(
       reverseCards.toArray(),
-      (card) => (card as any).color
+      (card) => card.color
     )
     _.forEach(reverseCardsByColor, (cards) => expect(cards.length).toEqual(2))
   })
@@ -79,7 +79,7 @@ describe('Initial deck', () => {
     const drawCards = initialDeck.filter((card: Card) => card.type === 'DRAW')
     const drawCardsByColor = _.groupBy(
       drawCards.toArray(),
-      (card) => (card as any).color
+      (card) => card.color
     )
     _.forEach(drawCardsByColor, (cards) => expect(cards.length).toEqual(2))
   })
@@ -87,9 +87,8 @@ describe('Initial deck', () => {
     expect(initialDeck.filter(_.matches({ type: 'WILD' })).size).toEqual(4)
   })
   it('contains 4 wild draw cards', () => {
-    expect(initialDeck.filter(_.matches({ type: 'WILD DRAW' })).size).toEqual(4)
+    expect(initialDeck.filter(_.matches({ type: 'WILD_DRAW' })).size).toEqual(4)
   })
-  // Blank cards skipped, since they have no gameplay
   it('contains 108 cards', () => {
     expect(initialDeck.size).toEqual(108)
   })

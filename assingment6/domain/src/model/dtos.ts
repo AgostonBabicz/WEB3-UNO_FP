@@ -1,7 +1,7 @@
-import { Card, CardType, Color } from "./deck"
+import { Card, Color, Type } from "./deck"
 
 export interface GraphQlCard {
-  type: CardType
+  type: Type
   color?: Color
   number?: number | string
 }
@@ -100,7 +100,32 @@ export interface DrawCardInput {
   playerIndex: number
   userId: string
 }
+export interface PlayCardInput {
+  gameId: string
+  playerIndex: number
+  cardIndex: number
+  askedColor?: Color
+  userId: string
+}
 
+export interface DrawCardInput {
+  gameId: string
+  playerIndex: number
+  userId: string
+}
+
+export interface SayUnoInput {
+  gameId: string
+  playerIndex: number
+  userId: string
+}
+
+export interface AccuseUnoInput {
+  gameId: string
+  accuserIndex: number
+  accusedIndex: number
+  userId: string
+}
 export interface SayUnoInput {
   gameId: string
   playerIndex: number

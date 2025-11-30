@@ -1,7 +1,7 @@
-import { query } from '../utils/pg'
+import { query } from '../utils/pg.js'
 import { SQL as sql } from 'sql-template-strings'
-import { CRUD } from './interface/crud'
-import { FinishRoundInput, GetRoundInput, StartRoundInput } from 'src/inputs/roundInputs'
+import { CRUD } from './interface/crud.js'
+import { FinishRoundInput, GetRoundInput, StartRoundInput } from 'src/inputs/roundInputs.js'
 
 export class RoundRepository implements CRUD<RoundRepository> {
   id: string

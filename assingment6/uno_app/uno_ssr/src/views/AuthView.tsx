@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useRouter } from 'next/navigation'
 import '../style/Auth.css'
 import {
   selectAuthError,
@@ -13,7 +13,7 @@ import RegisterThunk from '../thunks/RegisterThunk'
 
 const AuthView: React.FC = () => {
   const dispatch = useAppDispatch()
-  const navigate = useNavigate()
+  const router = useRouter()
 
   const isAuthed = useSelector(selectIsAuthed)
   const status = useSelector(selectAuthStatus)
@@ -30,9 +30,9 @@ const AuthView: React.FC = () => {
 
   useEffect(() => {
     if (isAuthed) {
-      navigate('/home')
+      router.push('/home')
     }
-  }, [isAuthed, navigate])
+  }, [isAuthed, router])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

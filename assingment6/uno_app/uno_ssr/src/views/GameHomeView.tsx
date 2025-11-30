@@ -69,7 +69,6 @@ const GameHomeView: React.FC = () => {
       }))
       
       const gameId: string = result.gameId
-      
       dispatch(subscribeToGameUpdates)
       dispatch(subscribeToGameEvents)
 
@@ -101,7 +100,7 @@ const GameHomeView: React.FC = () => {
         </div>
 
         {!isAuthed && (
-          <div className="auth-warning">
+          <div className="selector">
             <p>You need to log in before playing.</p>
             <button className="cta" onClick={() => router.push('/login')}>
               Go to Login

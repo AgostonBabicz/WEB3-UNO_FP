@@ -1,7 +1,7 @@
 import { UUIDResolver } from 'graphql-scalars'
-import { AuthenticateUserInput, CreateUserInput } from '../../inputs/userInputs'
-import { UserRepository } from '../../repository/userRepository'
-import { passwordHash } from '../../helpers/auth/passwordHash'
+import { AuthenticateUserInput, CreateUserInput } from '../../inputs/userInputs.js'
+import { UserRepository } from '../../repository/userRepository.js'
+import { passwordHash } from '../../helpers/auth/passwordHash.js'
 
 export const userResolver = {
   UUID: UUIDResolver,

@@ -1,7 +1,8 @@
 import { Card, Game } from '@uno/domain'
-import { GameRepository } from '../../repository/gameRepository'
-import { RoundRepository } from '../../repository/roundRepository'
-import { roundGetHand } from '@uno/domain'
+import { GameRepository } from '../../repository/gameRepository.js'
+import { RoundRepository } from '../../repository/roundRepository.js'
+import Domain from '@uno/domain'
+const { roundGetHand } = Domain
 
 // Minimal DTOs so we never import the old GameRuntime again
 export type PersistScoreRow = {
@@ -131,7 +132,7 @@ export async function persistRoundFinish(
     if (roundRowId) {
       await rrepo.finish({
         id: roundRowId,
-        winnerUserId: winnerUserId ?? undefined,
+        winnerUserId: winnerUserId ?? null,
         scores,
         endedAt: new Date().toISOString(),
       })
@@ -144,7 +145,7 @@ export async function persistRoundFinish(
       if (started) {
         await rrepo.finish({
           id: started.id,
-          winnerUserId: winnerUserId ?? undefined,
+          winnerUserId: winnerUserId ?? null,
           scores,
           endedAt: new Date().toISOString(),
         })

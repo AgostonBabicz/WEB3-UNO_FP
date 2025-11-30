@@ -12,8 +12,8 @@ import {
   sayUno,
   accuseUno,
   resetGame,
-} from '../../engine'
-import { publishEvent, publishUpdate, pubsub, eventsTopic, updatesTopic } from '../../pubsub'
+} from '../../engine.js'
+import { publishEvent, publishUpdate, pubsub, eventsTopic, updatesTopic } from '../../pubsub.js'
 import { GameEvent } from '@uno/domain'
 import {
   AddPlayerResolverInput,
