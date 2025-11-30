@@ -69,6 +69,13 @@ export const subscribeToGameEvents = (
                  message: `Player ${event.playerIndex} yelled UNO!` 
                }))
                break
+               
+            case 'Notice':
+                 dispatch(serverGameActions.setMessage({
+                     title: event.title,
+                     message: event.message
+                 }))
+                 break
         }
       } catch (e) {
         console.error("Error handling event side-effect:", e)

@@ -23,10 +23,11 @@ import {
 } from '@uno/domain'
 import { UnoCard } from '@/src/components/UnoCard'
 import { UnoDeck } from '@/src/components/UnoDeck'
-import { PopUpBox } from '@/src/components/PopUpBox'
 import BotTakeTurn from '@/src/thunks/BotTurnThunk'
 import { useRouter } from 'next/navigation'
 import { v4 as uuidv4 } from 'uuid'
+import { PopUpMessage } from '../components/PopUpMessage'
+import { PopUpBox } from '../components/PopUpBox'
 
 type GameViewProps = {
   botNumber: number
@@ -249,7 +250,7 @@ const GameView: React.FC<GameViewProps> = ({
       )}
 
       {uno.showPopUpMessage && (
-        <PopUpBox
+        <PopUpMessage
           show={uno.showPopUpMessage}
           title={uno.popUpTitle || ''}
           message={uno.popUpMessage || ''}

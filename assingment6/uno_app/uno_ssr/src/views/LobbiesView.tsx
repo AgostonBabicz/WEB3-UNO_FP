@@ -47,8 +47,8 @@ const LobbiesView: React.FC = () => {
       const result = await dispatch(JoinLobbyThunk({ id: gameId, myName: username }))
 
       const id: string = result.gameId
-      await dispatch(subscribeToGameUpdates)
-      await dispatch(subscribeToGameEvents)
+      dispatch(subscribeToGameUpdates)
+      dispatch(subscribeToGameEvents)
       await dispatch(RefreshMyHandThunk())
 
       router.push(`/game-server/${id}`)

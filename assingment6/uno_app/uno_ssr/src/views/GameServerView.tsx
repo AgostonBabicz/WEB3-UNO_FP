@@ -33,7 +33,7 @@ const GameServerView: React.FC = () => {
   const { gameId, game, meIndex } = useAppSelector(selectServerGame)
   const myHand = useAppSelector(selectServerGameMyHand)
   const playable = useAppSelector(selectServerGamePlayable)
-  // const popUp = useAppSelector(selectServerGamePopUp)
+  const popUp = useAppSelector(selectServerGamePopUp)
   const gameOver = useAppSelector(selectServerGameGameOver)
 
   const [showColorPicker, setShowColorPicker] = useState<number | null>(null)
@@ -112,6 +112,9 @@ const GameServerView: React.FC = () => {
     await dispatch(StartRoundThunk())
   }
 
+  const handleCloseMessage = () => {
+    dispatch(serverGameActions.clearMessage())
+  }
   const visibleOpponents = players.filter((_, i) => i !== meIndex)
 
   return (
@@ -166,16 +169,16 @@ const GameServerView: React.FC = () => {
         })}
       </header>
 
-      {/* <PopUpMessage
+      <PopUpMessage
         show={popUp.show}
         title={popUp.title || ''}
         message={popUp.message || ''}
         onClose={handleCloseMessage}
-      /> */}
+      />
 
       <section className="table">
         <div className="pile discard">
-          {/* 1. FIXED CARD TYPE SAFETY */}
+          {}
           {discardTop && (
             <UnoCard 
               type={discardTop.type} 

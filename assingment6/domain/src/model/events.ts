@@ -26,6 +26,11 @@ export type RoundEndedEvt = {
   pointsAwarded: number
   scores: number[]
 }
+
+export type NoticeEvt={
+  title: string,
+  message:string
+}
 export type GameEndedEvt = { gameId: UUID; winnerIndex: number; scores: number[] }
 export type GameUpdatedEvt = { game: Game }
 
@@ -40,3 +45,4 @@ export type GameEvent =
   | ({ __typename: 'RoundEnded' } & RoundEndedEvt)
   | ({ __typename: 'GameEnded' } & GameEndedEvt)
   | ({ __typename: 'GameUpdated' } & GameUpdatedEvt)
+  | ({ __typename: 'Notice' } & NoticeEvt)

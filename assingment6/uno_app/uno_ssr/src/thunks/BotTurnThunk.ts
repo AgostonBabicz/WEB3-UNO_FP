@@ -91,10 +91,23 @@ const botTakeTurn = () => async (dispatch: AppDispatch, getState: () => RootStat
         const color = chooseWildColor(r2, ix)
         dispatch(unoGameActions.setMessage({
             title: 'Bot plays',
-            message: `Bot ${opts?.players[ix]} plays ${card.type} and chooses ${color}`,
+            message: `${opts?.players[ix]} plays ${card.type} and chooses ${color}`,
         }))
         dispatch(unoGameActions.playCard({ cardIx: i, askedColor: color }))
-      } else {
+      } else  if (card.type === 'REVERSE' || card.type === 'DRAW' || card.type ==='SKIP'){
+        const cardColor = 'color' in card ? card.color : 'UNKNOWN'
+        dispatch(unoGameActions.setMessage({
+            title: 'Bot plays',
+            message: `${opts?.players[ix]} plays ${card.type} with color ${cardColor}`,
+        }))
+        dispatch(unoGameActions.playCard({ cardIx: i }))
+      }else{
+        const cardColor = 'color' in card ? card.color : 'UNKNOWN'
+        const cardNumber = 'number' in card ? card.number : ''
+        dispatch(unoGameActions.setMessage({
+            title: 'Bot plays',
+            message: `${opts?.players[ix]} plays ${cardColor} ${cardNumber}`,
+        }))
         dispatch(unoGameActions.playCard({ cardIx: i }))
       }
       played = true
