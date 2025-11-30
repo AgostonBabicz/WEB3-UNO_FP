@@ -18,7 +18,6 @@ export type {
   Card, 
   Color, 
   Deck, 
-  CardType, 
   NumberCard, 
   SpecialCard, 
   WildCard,
@@ -69,7 +68,7 @@ export {
   isWild,
   shuffle as deckShuffle,
   top as deckTop,
-  size as deckSize,
+  deckSize as deckSize,
   deal as deckDeal,
   toArray as deckToArray
 } from './model/deck'
@@ -79,7 +78,7 @@ export {
   createHand,
   add as handAdd,
   remove as handRemove,
-  toArray as handToArray
+  toCardsArray as handToArray
 } from './model/player_hand'
 
 export {

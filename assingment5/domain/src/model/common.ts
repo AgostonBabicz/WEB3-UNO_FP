@@ -1,13 +1,12 @@
 import { Game } from "./uno"
 import { List } from 'immutable'
 import type { Round } from './round'
-import type { Card, Color, CardType, Deck } from './deck'
+import type { Card, Color, Deck } from './deck'
 import type { PlayerHand } from './player_hand'
 import type { GameEvent } from './events'
 import { createHand } from './player_hand'
 import { createDeckWithCards, createEmptyDeck } from './deck'
 import { standardRandomizer, standardShuffler } from '../utils/random_utils'
-import { GraphQlGame } from "./dtos"
 
 export type UUID = string
 
@@ -42,12 +41,12 @@ export function parseRound(
 ): Round {
   if (!raw) throw new Error('Invalid round data')
 
-  const discardDeck: Deck = raw.discardTop 
+  const discardDeck: Deck<Card> = raw.discardTop 
     ? createDeckWithCards([parseCard(raw.discardTop)]) 
     : createEmptyDeck()
 
   const drawSize = raw.drawPileSize ?? 0
-  const drawDeck: Deck = createDeckWithCards(Array(drawSize).fill(DUMMY_CARD))
+  const drawDeck: Deck<Card> = createDeckWithCards(Array(drawSize).fill(DUMMY_CARD))
 
   const playerHands = List<PlayerHand>(
     playerNames.map((_, index) => {

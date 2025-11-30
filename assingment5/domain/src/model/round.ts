@@ -1,6 +1,6 @@
 import { Shuffler } from "../utils/random_utils";
 import { List } from "immutable";
-import { Deck, Card, Color, isColored, createInitialDeck, createEmptyDeck, isWild, createDeckWithCards  } from "./deck";
+import { Deck, Card, Color, isColored, createInitialDeck, createEmptyDeck, isWild, createDeckWithCards, shuffle, deal, putCardOnTop,top, getDeckUnderTop,toArray  } from "./deck";
 import { add, createHand, PlayerHand, toCardsArray, remove } from "./player_hand";
 import { mod } from "../utils/mod";
 import { shallowCopy } from "../utils/updater";
@@ -10,8 +10,8 @@ export type Round = Readonly<{
   playerCount: number;
   players: ReadonlyArray<string>;
   currentPlayerIndex: number;
-  discardDeck: Deck;
-  drawDeck: Deck;
+  discardDeck: Deck<Card>;
+  drawDeck: Deck<Card>;
   playerHands: List<PlayerHand>;
   dealer: number;
   shuffler?: Shuffler<Card>;
@@ -52,28 +52,28 @@ function wrapRound(
   if (players.length < 2) throw new Error("A Round requires at least 2 players")
   if (players.length > 10) throw new Error("A Round allows at most 10 players")
 
-  let drawDeck = createInitialDeck().shuffle(shuffler);
+  let drawDeck = createInitialDeck();
+  drawDeck = shuffle(drawDeck, shuffler)
   const discardDeck = createEmptyDeck();
   let playerHands = List<PlayerHand>(Array.from({ length: players.length }, () => createHand()));
 
-  // deal cards to all players
   for (let p = 0; p < players.length; p++) {
     for (let j = 0; j < (cardsPerPlay ?? 7); j++) {
-      const [c, nd] = drawDeck.deal();
+      const [c, nd] = deal(drawDeck);
       if (!c) throw new Error("Not enough cards");
       drawDeck = nd;
       playerHands = playerHands.update(p, h => add(h as PlayerHand, c));
     }
   }
 
-  // flip non-wild starter
   let top: Card | undefined;
   while (true) {
-    const [card, rest] = drawDeck.deal();
+    const [card, rest] = deal(drawDeck);
     if (!card) throw new Error("Not enough cards");
 
     if (isWild(card)) {
-      drawDeck = rest.putCardOnTop(card).shuffle(shuffler);
+      drawDeck = putCardOnTop(rest,card)
+      drawDeck = shuffle(drawDeck,shuffler)
       continue;
     }
 
@@ -81,7 +81,7 @@ function wrapRound(
     drawDeck = rest;
     break;
   }
-  const seededDiscard = discardDeck.putCardOnTop(top!);
+  const seededDiscard = putCardOnTop(discardDeck,top!)
   const currentColor = isColored(top!) ? top!.color : "";
 
   return {
@@ -110,16 +110,16 @@ function wrapRound(
 
 function resolveStart(s: Round): Round {
   if (s.startResolved) return s;
-  const top = s.discardDeck.top()!;
+  const topCard = top(s.discardDeck)!;
   const pc = s.playerCount;
   const dir = s.direction;
 
   const base = shallowCopy(s, {
     startResolved: true,
-    currentColor: isColored(top) ? top.color : s.currentColor,
+    currentColor: isColored(topCard) ? topCard.color : s.currentColor,
   });
 
-  switch (top.type) {
+  switch (topCard.type) {
     case "DRAW": {
       const target = mod(base.dealer + dir, pc);
       const [, s2] = drawTo(base, target, 2);
@@ -146,43 +146,44 @@ function resolveStart(s: Round): Round {
 
 
 function drawTo(s: Round, p: number, n = 1): [void, Round] {
-  let state = s;
+  let currentState = s;
 
   for (let i = 0; i < n; i++) {
-    let [card, nd] = state.drawDeck.deal();
+    let card: Card | undefined;
+    let nd: Deck<Card>;
 
-    // If draw deck is empty, we reshuffle discard (minus top card) into draw
+    [card, nd] = deal(currentState.drawDeck);
+
     if (!card) {
-      const top = state.discardDeck.top();                      // keep the visible top card
-      const underDeck = state.discardDeck.getDeckUnderTop();    // everything under top
-      const under = underDeck.toArray();                        // plain snapshot array (safe)
+      const topCard = top(currentState.discardDeck);
+      const underDeck = getDeckUnderTop(currentState.discardDeck);
 
-      if (under.length === 0) throw new Error("No cards left to draw");
+      if (underDeck.size === 0) throw new Error("No cards left to draw");
 
-      // Wrap plain array back into a Deck (preserves immutability)
-      let reshuffled = createDeckWithCards(under);
-      if (state.shuffler) reshuffled = reshuffled.shuffle(state.shuffler);
+      let reshuffled = createDeckWithCards(toArray(underDeck));
+      if (currentState.shuffler) reshuffled = shuffle(reshuffled, currentState.shuffler);
 
-      [card, nd] = reshuffled.deal();
+      [card, nd] = deal(reshuffled); // Assign to outer scoped card/nd
+
       if (!card) throw new Error("No cards left to draw");
 
-      // Rebuild discard to only contain the top card (or be empty)
-      state = shallowCopy(state, {
-        discardDeck: top ? createEmptyDeck().putCardOnTop(top) : createEmptyDeck(),
+      currentState = shallowCopy(currentState, {
+        discardDeck: topCard ? putCardOnTop(createEmptyDeck(), topCard) : createEmptyDeck(),
+        drawDeck: nd
       });
+    } else {
+      currentState = shallowCopy(currentState, { drawDeck: nd });
     }
 
-    // Update draw deck + player's hand immutably
-    state = shallowCopy(state, {
-      drawDeck: nd,
-      playerHands: state.playerHands.update(
+    currentState = shallowCopy(currentState, {
+      playerHands: currentState.playerHands.update(
         p,
         h => add(h as PlayerHand, card!)
       ),
     });
   }
 
-  return [undefined, state];
+  return [undefined, currentState];
 }
 
 export function player(state: Round, ix: number): string {
@@ -196,20 +197,20 @@ export function player(state: Round, ix: number): string {
 export function getHand(state: Round, ix: number): readonly Card[] {
   const hand = state.playerHands.get(ix);
   if (!hand) throw new Error("Hand not found");
-  return hand.cards.toArray();
+  return toCardsArray(hand);
 }
 
 
-export function discardPile(state: Round): Deck {
+export function discardPile(state: Round): Deck<Card> {
   return state.discardDeck;
 }
 
-export function drawPile(state: Round): Deck {
+export function drawPile(state: Round): Deck<Card> {
   return state.drawDeck;
 }
 
 export function topOfDiscard(state: Round): Card | undefined {
-  return discardPile(state).top()
+  return top(discardPile(state))
 }
 
 export function canPlayAny(state: Round): boolean {
@@ -229,17 +230,18 @@ export function canPlay(cardIx: number, state: Round): boolean {
   const size = toCardsArray(hand!).length;
   if (cardIx < 0 || cardIx >= size) return false;
 
-  const top = state.discardDeck.top();
+  const topCard = top(state.discardDeck);
   const played = getHand(state, p)[cardIx]; // snapshot access
   const effectiveColor = state.currentColor;
+  const tCard = topCard!;
 
   if (isColored(played)) {
-    switch (top!.type) {
+    switch (tCard.type) {
       case 'NUMBERED':
         if (played.type === 'NUMBERED') {
           return (
             played.color === effectiveColor ||
-            played.number === (isColored(top!) ? top.number : -1)
+            (tCard.type === 'NUMBERED' && played.number === tCard.number)
           );
         }
         return played.color === effectiveColor;
@@ -248,13 +250,13 @@ export function canPlay(cardIx: number, state: Round): boolean {
       case 'DRAW':    return played.color === effectiveColor || played.type === 'DRAW';
       case 'REVERSE': return played.color === effectiveColor || played.type === 'REVERSE';
       case 'WILD':
-      case 'WILD DRAW':
+      case 'WILD_DRAW':
         return played.color === effectiveColor;
     }
   } else {
     if (played.type === 'WILD') return true
 
-    if (played.type === 'WILD DRAW') {
+    if (played.type === 'WILD_DRAW') {
       if (!effectiveColor) {
         const hasAnyColored = toCardsArray(state.playerHands.get(p)!).some(
           isColored
@@ -279,7 +281,7 @@ export function play(cardIx: number, askedColor: Color | undefined, state: Round
   const p = s.playerInTurn;
   if (p === undefined) throw new Error("It's not any player's turn");
 
-  const handArr = getHand(s, p);            // snapshot access
+  const handArr = getHand(s, p);
   const handSize = handArr.length;
 
   if (handSize === 0 || cardIx < 0 || cardIx >= handSize) {
@@ -305,8 +307,8 @@ export function play(cardIx: number, askedColor: Color | undefined, state: Round
   }
 
   if (!canPlay(cardIx, s)) {
-    const top = s.discardDeck.top();
-    throw new Error(`Illegal play:\n${JSON.stringify(playedCard)}\n${JSON.stringify(top)}`);
+    const topCard = top(s.discardDeck)
+    throw new Error(`Illegal play:\n${JSON.stringify(playedCard)}\n${JSON.stringify(topCard)}`);
   }
 
   if (handSize === 2) {
@@ -323,14 +325,13 @@ export function play(cardIx: number, askedColor: Color | undefined, state: Round
   });
 
   s = shallowCopy(s, {
-    discardDeck: s.discardDeck.putCardOnTop(playedCard),
+    discardDeck: putCardOnTop(s.discardDeck,playedCard),
     currentColor: isColored(playedCard) ? playedCard.color : (askedColor),
   });
 
-  // Applying card effects and advance turn
   const pc = s.playerCount;
   const dir = s.direction;
-  const topNow = s.discardDeck.top()!;
+  const topNow = top(s.discardDeck)!;
 
   switch (topNow.type) {
     case "NUMBERED":
@@ -361,7 +362,7 @@ export function play(cardIx: number, askedColor: Color | undefined, state: Round
       }
       break;
     }
-    case "WILD DRAW": {
+    case "WILD_DRAW": {
       const target = mod(p + dir, pc);
       const [, s2] = drawTo(s, target, 4);
       s = setTurn(s2, mod(target + dir, pc));
@@ -405,18 +406,19 @@ export function draw(state: Round): Round {
   // ---- 1) Try to deal; if empty-before-deal, reshuffle-under-top, then deal ----
   let card: Card | undefined;
   let rest: Deck<Card>;
-  [card, rest] = s.drawDeck.deal();
+  [card, rest] = deal(s.drawDeck)
 
   if (!card) {
-    const top = s.discardDeck.top();
-    const underTop = s.discardDeck.getDeckUnderTop();
+    const topCard = top(s.discardDeck);
+    const underTop = getDeckUnderTop(s.discardDeck)
     if (underTop.size === 0) throw new Error("No cards left to draw");
 
-    const reshuffled = s.shuffler ? underTop.shuffle(s.shuffler) : underTop;
-    [card, rest] = reshuffled.deal();
+    let reshuffled = s.shuffler ? shuffle(underTop,s.shuffler) : underTop;
+    [card, rest] = deal(reshuffled)
 
     s = shallowCopy(s, {
-      discardDeck: top ? createEmptyDeck().putCardOnTop(top) : createEmptyDeck(),
+      discardDeck: topCard ? putCardOnTop(createEmptyDeck(),topCard) : createEmptyDeck(),
+      drawDeck:rest
     });
 
     if (!card) throw new Error("No cards left to draw");
@@ -431,12 +433,12 @@ export function draw(state: Round): Round {
 
   // ---- 2) If we just drew the last card, pre-reshuffle for the NEXT player ----
   if (s.drawDeck.size === 0) {
-    const top = s.discardDeck.top();
-    const underTop = s.discardDeck.getDeckUnderTop();
+    const topCard = top(s.discardDeck)
+    const underTop = getDeckUnderTop(s.discardDeck);
     if (underTop.size > 0) {
-      const reshuffled = s.shuffler ? underTop.shuffle(s.shuffler) : underTop;
+      const reshuffled = s.shuffler ? shuffle(underTop,s.shuffler) : underTop;
       s = shallowCopy(s, {
-        discardDeck: top ? createEmptyDeck().putCardOnTop(top) : createEmptyDeck(),
+        discardDeck: topCard ? putCardOnTop(createEmptyDeck(),topCard) : createEmptyDeck(),
         drawDeck: reshuffled,
       });
     }
@@ -496,7 +498,7 @@ export function score(state: Round): number | undefined {
         case 'REVERSE':
         case 'DRAW':      return acc + 20;
         case 'WILD':
-        case 'WILD DRAW': return acc + 50;
+        case 'WILD_DRAW': return acc + 50;
       }
     }, 0);
   }
@@ -514,9 +516,11 @@ export function sayUno(playerIx: number, state: Round): Round {
     throw new Error("Player index out of bounds");
   }
 
+  const newSet = new Set(s.unoSayersSinceLastAction).add(playerIx);
+
   s = shallowCopy(s, {
     lastUnoSayer: playerIx,
-    unoSayersSinceLastAction: new Set<number>([...s.unoSayersSinceLastAction, playerIx])
+    unoSayersSinceLastAction: newSet 
   })
   if (s.pendingUnoAccused === playerIx) {
     s = shallowCopy(s, {

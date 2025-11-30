@@ -15,7 +15,7 @@
     "@types/react-dom": "^19.2.3",
     "@uno/domain": "file:../domain",
     "graphql-ws": "^6.0.6",
-    "immer": "^10.2.0",
+    "immer": "^11.0.1",
     "immutable": "^5.1.4",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

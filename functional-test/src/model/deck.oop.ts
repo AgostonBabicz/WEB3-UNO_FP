@@ -3,7 +3,7 @@
 // import { List } from 'immutable'
 // import { Shuffler } from '../utils/random_utils';
 
-// type Type = 'NUMBERED' | 'SKIP' | 'REVERSE' | 'DRAW' | 'WILD' | 'WILD DRAW'
+// type Type = 'NUMBERED' | 'SKIP' | 'REVERSE' | 'DRAW' | 'WILD' | 'WILD_DRAW'
 // const colors = ['BLUE', 'RED', 'GREEN', 'YELLOW'] as const;
 // export type Color = typeof colors[number];
 // const cardNumbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
@@ -16,12 +16,12 @@
 
 // type SpecialCard = SkipCard | ReverseCard | DrawCard
 
-// type WildCard    = Readonly<{ type: 'WILD' | 'WILD DRAW' }>
+// type WildCard    = Readonly<{ type: 'WILD' | 'WILD_DRAW' }>
 // type ColoredCard = Readonly<NumberCard | SpecialCard>
 
 // type NumKey = Extract<Type, 'NUMBERED'>
 // type SpecialKey = Extract<Type, 'SKIP' | 'REVERSE' | 'DRAW'>
-// type WildKey = Extract<Type, 'WILD' | 'WILD DRAW'>
+// type WildKey = Extract<Type, 'WILD' | 'WILD_DRAW'>
 // type CardMap =
 //     & Record<NumKey, NumberCard>
 //     & Record<SpecialKey, SpecialCard>
@@ -31,10 +31,10 @@
 // export type Card = Readonly<TypedCard<Type>>
 
 // export function isColored(card:Card) : card is ColoredCard{
-//     return card.type !== 'WILD' && card.type !== 'WILD DRAW'
+//     return card.type !== 'WILD' && card.type !== 'WILD_DRAW'
 // }
 // export function isWild(card: Card) : card is WildCard{
-//     return card.type==='WILD'||card.type==="WILD DRAW"
+//     return card.type==='WILD'||card.type==="WILD_DRAW"
 // }
 
 // export class Deck<C extends Card = Card> {
@@ -111,7 +111,7 @@
 
 //         for (let i = 0; i < 4; i++) {
 //             cs.push({ type: 'WILD' })
-//             cs.push({ type: 'WILD DRAW' })
+//             cs.push({ type: 'WILD_DRAW' })
 //         }
 
 //         cs.push({ type: 'NUMBERED', color: 'BLUE', number: 0 })

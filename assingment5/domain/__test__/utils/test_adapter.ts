@@ -4,7 +4,7 @@ import * as round from '../../src/model/round'
 import * as uno from '../../src/model/uno'
 
 
-export function createInitialDeck(): deck.Deck {
+export function createInitialDeck(): deck.Deck<deck.Card> {
   return deck.createInitialDeck()
 }
 

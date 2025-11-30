@@ -6,10 +6,10 @@ const colors = ['BLUE', 'RED', 'GREEN', 'YELLOW'] as const
 const cardNumbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] as const
 
 export function isColored(card: Card): card is ColoredCard {
-  return card.type !== 'WILD' && card.type !== 'WILD DRAW'
+  return card.type !== 'WILD' && card.type !== 'WILD_DRAW'
 }
 export function isWild(card: Card): card is WildCard {
-  return card.type === 'WILD' || card.type === 'WILD DRAW'
+  return card.type === 'WILD' || card.type === 'WILD_DRAW'
 }
 
 function wrapDeck<C extends Card>(l: List<C>): Deck<C> {
@@ -102,7 +102,7 @@ export function createInitialDeck(): Deck<Card> {
     }
     for (let i = 0; i < 4; i++) {
       cs.push({ type: 'WILD' })
-      cs.push({ type: 'WILD DRAW' })
+      cs.push({ type: 'WILD_DRAW' })
     }
     cs.push({ type: 'NUMBERED', color: 'BLUE', number: 0 })
     cs.push({ type: 'NUMBERED', color: 'RED', number: 0 })

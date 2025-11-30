@@ -301,13 +301,13 @@ export function canPlay(cardIx: number, state: Round): boolean {
       case 'REVERSE':
         return played.color === effectiveColor || played.type === 'REVERSE'
       case 'WILD':
-      case 'WILD DRAW':
+      case 'WILD_DRAW':
         return played.color === effectiveColor
     }
   } else {
     if (played.type === 'WILD') return true
 
-    if (played.type === 'WILD DRAW') {
+    if (played.type === 'WILD_DRAW') {
       // must NOT have a card of the effective color
       if (!effectiveColor) {
         // no known color, be strict: only allow if hand has zero colored cards
@@ -423,7 +423,7 @@ export function play(
       }
       break
     }
-    case 'WILD DRAW': {
+    case 'WILD_DRAW': {
       const target = mod(p + dir, pc)
       const [, s2] = drawTo(s, target, 4)
       s = setTurn(s2, mod(target + dir, pc))
@@ -557,7 +557,7 @@ export function score(state: Round): number | undefined {
         case 'DRAW':
           return acc + 20
         case 'WILD':
-        case 'WILD DRAW':
+        case 'WILD_DRAW':
           return acc + 50
       }
     }, 0)

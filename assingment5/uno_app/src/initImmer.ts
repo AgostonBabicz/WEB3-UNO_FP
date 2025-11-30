@@ -1,2 +1,2 @@
-import { enableMapSet } from 'immer'
-enableMapSet()
+import { enableMapSet } from 'immer';
+enableMapSet();

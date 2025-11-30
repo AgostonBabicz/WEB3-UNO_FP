@@ -10,7 +10,7 @@ export const gameSchema = gql`
     GREEN
     BLUE
   }
-  enum CardType {
+  enum Type {
     NUMBERED
     SKIP
     REVERSE
@@ -32,7 +32,7 @@ export const gameSchema = gql`
   }
 
   type Card {
-    type: CardType!
+    type: Type!
     color: Color
     number: CardNumber
   }

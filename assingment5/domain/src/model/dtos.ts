@@ -1,7 +1,7 @@
-import { Card, CardType, Color } from "./deck"
+import { Card, Color, Type } from "./deck"
 
 export interface GraphQlCard {
-  type: CardType
+  type: Type
   color?: Color
   number?: number | string
 }
