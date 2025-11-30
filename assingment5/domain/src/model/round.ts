@@ -163,7 +163,7 @@ function drawTo(s: Round, p: number, n = 1): [void, Round] {
       let reshuffled = createDeckWithCards(toArray(underDeck));
       if (currentState.shuffler) reshuffled = shuffle(reshuffled, currentState.shuffler);
 
-      [card, nd] = deal(reshuffled); // Assign to outer scoped card/nd
+      [card, nd] = deal(reshuffled);
 
       if (!card) throw new Error("No cards left to draw");
 
@@ -223,7 +223,6 @@ export function canPlayAny(state: Round): boolean {
 export function canPlay(cardIx: number, state: Round): boolean {
   if (winner(state) !== undefined) return false;
 
-  // use real turn holder; fall back just in case
   const p = state.playerInTurn ?? state.currentPlayerIndex;
 
   const hand = state.playerHands.get(p);
@@ -231,7 +230,7 @@ export function canPlay(cardIx: number, state: Round): boolean {
   if (cardIx < 0 || cardIx >= size) return false;
 
   const topCard = top(state.discardDeck);
-  const played = getHand(state, p)[cardIx]; // snapshot access
+  const played = getHand(state, p)[cardIx]; 
   const effectiveColor = state.currentColor;
   const tCard = topCard!;
 
@@ -403,7 +402,6 @@ export function draw(state: Round): Round {
 
   const p = s.playerInTurn;
 
-  // ---- 1) Try to deal; if empty-before-deal, reshuffle-under-top, then deal ----
   let card: Card | undefined;
   let rest: Deck<Card>;
   [card, rest] = deal(s.drawDeck)
@@ -431,7 +429,6 @@ export function draw(state: Round): Round {
     lastActor: p,
   });
 
-  // ---- 2) If we just drew the last card, pre-reshuffle for the NEXT player ----
   if (s.drawDeck.size === 0) {
     const topCard = top(s.discardDeck)
     const underTop = getDeckUnderTop(s.discardDeck);
@@ -491,7 +488,7 @@ export function score(state: Round): number | undefined {
   for (let i = 0; i < state.playerHands.size; i++) {
     if (i === w) continue;
     const hand = state.playerHands.get(i)!;
-    total += toCardsArray(hand).reduce((acc, curr) => {   // snapshot then reduce
+    total += toCardsArray(hand).reduce((acc, curr) => {
       switch (curr.type) {
         case 'NUMBERED':  return acc + curr.number;
         case 'SKIP':

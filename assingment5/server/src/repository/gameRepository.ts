@@ -42,7 +42,6 @@ export class GameRepository implements CRUD<GameRepository> {
     `)
   }
 
-  // stubs
   get(): Promise<GameRepository[]> {
     throw new Error('Not implemented')
   }

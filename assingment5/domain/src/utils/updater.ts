@@ -22,7 +22,6 @@ export function updateIn<T, V>(
     const updated = tail.length ? updateIn(curr, tail, fn) : fn(curr);
     if ((obj as any)[head] === updated) return obj;
 
-    // keep prototype of obj (useful if obj has one)
     const clone: any = Array.isArray(obj) ? obj.slice() : Object.assign(Object.create(Object.getPrototypeOf(obj)), obj);
     clone[head] = updated;
     return clone as T;

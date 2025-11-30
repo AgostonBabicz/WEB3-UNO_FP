@@ -1,6 +1,5 @@
 import { Pool, PoolClient } from 'pg'
 import { SQLStatement } from 'sql-template-strings'
-// import 'dotenv/config'
 
 const pool = new Pool({
   user: 'postgres',

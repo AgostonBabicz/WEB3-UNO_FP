@@ -1,4 +1,3 @@
-//ASK OLE IG PLS
 import { List } from "immutable";
 import { Card, Color, isColored } from "./deck";
 

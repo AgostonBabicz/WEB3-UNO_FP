@@ -80,8 +80,8 @@ const GameHomeView: React.FC = () => {
   }
 
   const handleLogout = () => {
-    dispatch(logout()) // This clears Redux AND LocalStorage
-    navigate('/')      // Go back to login
+    dispatch(logout())
+    navigate('/')
   }
 
   return (

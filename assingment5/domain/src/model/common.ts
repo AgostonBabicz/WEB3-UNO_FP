@@ -13,7 +13,6 @@ export type UUID = string
 type Indexed<Y, pending extends boolean> = Readonly<Y & {id: string, pending: pending}>
 export type IndexedGame = Indexed<Game, true>
 
-// A placeholder card used to fill decks/hands so .size returns the correct number
 const DUMMY_CARD: Card = { type: 'NUMBERED', color: 'BLUE', number: 0 }
 
 export function parseCard(raw: any): Card {

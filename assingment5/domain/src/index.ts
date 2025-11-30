@@ -1,6 +1,6 @@
 import { parseCard, parseEvent, parseGame, parseRound, toDomainCard, toDomainGame } from './model/common'
 
-export * from './model/common' // UUID
+export * from './model/common'
 export type { 
   Game, 
   Props,

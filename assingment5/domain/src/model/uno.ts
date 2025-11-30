@@ -19,7 +19,7 @@ export type Game = Readonly<{
   readonly randomizer: Randomizer
   readonly shuffler: Shuffler<Card>
   readonly cardsPerPlayer: number
-  readonly winner: number | undefined // index, not name
+  readonly winner: number | undefined 
 }>
 
 export type Props = Readonly<{
