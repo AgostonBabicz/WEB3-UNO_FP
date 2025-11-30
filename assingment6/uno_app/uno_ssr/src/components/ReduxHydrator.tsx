@@ -22,7 +22,6 @@ const createHydratedStore = (
   
   const store = makeStore()
   
-  // Hydration Logic (identical to your old 'if (initialized.current === null)' block)
   if (user) {
     store.dispatch(authActions.authSuccess(user))
   }
@@ -49,14 +48,10 @@ export default function ReduxHydrator({
   activeGame 
 }: Props) {
   
-  // 1. 🔑 FIX: useState with a function initializer runs ONLY ONCE.
-  // This creates the store and hydrates it on the server, and preserves
-  // that *same instance* across all client re-renders.
   const [store] = useState(() => 
     createHydratedStore(user, waitingGames, activeGame)
   )
 
-  // 2. The subscription logic is now safe because 'store' is stable.
   useEffect(() => {
     let updatesSub: { unsubscribe: () => void } | undefined
     let eventsSub: { unsubscribe: () => void } | undefined

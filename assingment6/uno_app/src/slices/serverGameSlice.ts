@@ -34,7 +34,6 @@ export const serverGameSlice = createSlice({
   name: 'serverGame',
   initialState,
   reducers: {
-    // Plain state setters
     setGameId(state, action: PayloadAction<{ gameId: string, meIndex: number }>) {
       state.gameId = action.payload.gameId
       state.meIndex = action.payload.meIndex
@@ -63,7 +62,6 @@ export const serverGameSlice = createSlice({
     handleGameEnded(state, action: PayloadAction<{ winnerIndex: number }>) {
        if (state.gameOverTriggered) return
        const winnerIx = action.payload.winnerIndex
-       // Safe navigation in case players array isn't fully loaded
        const winnerName = state.game?.players?.[winnerIx] ?? 'Unknown'
        state.gameOverWinnerName = winnerName
        state.gameOverTriggered = true

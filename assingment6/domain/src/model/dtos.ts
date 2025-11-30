@@ -28,12 +28,11 @@ export interface GraphQlGame {
   createdAt: string
   targetScore: number
   cardsPerPlayer: number
-  players: GraphQlPlayer[] // Mutable array
+  players: GraphQlPlayer[]
   currentRound?: GraphQlRound | null
   winnerIndex?: number | null
 }
 
-// Wrapper types for Queries/Mutations
 export interface CreateGameData {
   createGame: { game: GraphQlGame }
 }

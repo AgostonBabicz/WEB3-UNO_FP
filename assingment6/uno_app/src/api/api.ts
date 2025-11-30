@@ -97,7 +97,6 @@ export async function getWaitingGames(): Promise<IndexedGame[]> {
 }
 
 export async function addPlayer(gameId: string, name: string, userId: string): Promise<IndexedGame> {
-  // Using StandardMutationData since addPlayer returns a game
   const { data } = await apollo.mutate<StandardMutationData>({
     mutation: ADD_PLAYER,
     variables: { gameId, name, userId },
