@@ -1,7 +1,7 @@
 import { describe, it, expect } from '@jest/globals'
 import { createInitialDeck } from '../utils/test_adapter'
 import * as _ from 'lodash'
-import { Card } from '../../src/types/deck.types'
+import { Card } from '../../src'
 
 describe('Initial deck', () => {
   const initialDeck = createInitialDeck()
@@ -87,7 +87,7 @@ describe('Initial deck', () => {
     expect(initialDeck.filter(_.matches({ type: 'WILD' })).size).toEqual(4)
   })
   it('contains 4 wild draw cards', () => {
-    expect(initialDeck.filter(_.matches({ type: 'WILD DRAW' })).size).toEqual(4)
+    expect(initialDeck.filter(_.matches({ type: 'WILD_DRAW' })).size).toEqual(4)
   })
   // Blank cards skipped, since they have no gameplay
   it('contains 108 cards', () => {

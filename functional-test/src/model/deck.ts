@@ -7,7 +7,7 @@ export type Type =
   | 'REVERSE'
   | 'DRAW'
   | 'WILD'
-  | 'WILD DRAW'
+  | 'WILD_DRAW'
 
 
 const colors = ['BLUE', 'RED', 'GREEN', 'YELLOW'] as const
@@ -24,12 +24,12 @@ export type DrawCard = Readonly<{ type: 'DRAW'; color: Color }>
 
 export type SpecialCard = SkipCard | ReverseCard | DrawCard
 
-export type WildCard = Readonly<{ type: 'WILD' | 'WILD DRAW' }>
+export type WildCard = Readonly<{ type: 'WILD' | 'WILD_DRAW' }>
 export type ColoredCard = Readonly<NumberCard | SpecialCard>
 
 export type NumKey = Extract<Type, 'NUMBERED'>
 export type SpecialKey = Extract<Type, 'SKIP' | 'REVERSE' | 'DRAW'>
-export type WildKey = Extract<Type, 'WILD' | 'WILD DRAW'>
+export type WildKey = Extract<Type, 'WILD' | 'WILD_DRAW'>
 export type CardMap = Record<NumKey, NumberCard> &
   Record<SpecialKey, SpecialCard> &
   Record<WildKey, WildCard>
@@ -37,71 +37,63 @@ export type CardMap = Record<NumKey, NumberCard> &
 export type TypedCard<T extends Type> = CardMap[T]
 export type Card = Readonly<TypedCard<Type>>
 
+export type Deck<Card> = List<Card>
+
 export function isColored(card: Card): card is ColoredCard {
-  return card.type !== 'WILD' && card.type !== 'WILD DRAW'
+  return card.type !== 'WILD' && card.type !== 'WILD_DRAW'
 }
 export function isWild(card: Card): card is WildCard {
-  return card.type === 'WILD' || card.type === 'WILD DRAW'
+  return card.type === 'WILD' || card.type === 'WILD_DRAW'
 }
-export class Deck<C extends Card = Card> {
-    readonly cards: List<C>
 
-    constructor(cards: List<C>) {
-        this.cards = cards
-    }
+export function deckSize<C extends Card>(deck: Deck<C>): number {
+    return deck.size
+}
 
-    // Filter overloadig so that NumberCard is narrowed in the test (maybe use elsewhere later)
-    filter<S extends C>(predicate: (card: C, index: number) => card is S): Deck<S>
-    filter(predicate: (card: C, index: number) => boolean): Deck<C>
-    filter(predicate: any): any {
-        const cards = this.cards.filter(predicate as any)
-        return new Deck(cards)
-    }
-    map<R>(mapper: (card: C, index: number) => R) {
-        return this.cards.map(mapper)
-    }
+export function toArray<C extends Card>(deck: Deck<C>): C[] {
+    return deck.toArray() 
+}
 
-    toArray(): C[] {
-        return this.cards.toArray() // toArray() is fine, returns mutable snapshot of immutable doesnt expose internal
-    }
+export function top<C extends Card>(deck: Deck<C>): C | undefined {
+    return deck.first()
+}
+// peek() is deckTop()
 
-    deal() : [C|undefined, Deck<C>]{
-        const card = this.cards.first()
-        const rest = this.cards.shift()
-        return [card,new Deck(rest)]
-    }
+export function deal<C extends Card>(deck: Deck<C>): [C | undefined, Deck<C>] {
+    const card = deck.first()
+    const rest = deck.shift() as Deck<C>
+    return [card, rest]
+}
+export function shuffle<C extends Card>(deck: Deck<C>, shuffler: Shuffler<C>): Deck<C> {
+    const cardsShuffled = List(shuffler(deck.toArray()))
+    return cardsShuffled as Deck<C>
+}
 
-    shuffle(shuffler:Shuffler<C>) : Deck<C>{
-        const cardsShuffled = List(shuffler(this.cards.toArray()))
-        return new Deck(cardsShuffled)
-    }
+export function getDeckUnderTop<C extends Card>(deck: Deck<C>): Deck<C> {
+    return deck.shift() as Deck<C>
+}
 
-    get size() : number{
-        return this.cards.size
-    }
+export function putCardOnTop<C extends Card>(deck: Deck<C>, card: C): Deck<C> {
+    return deck.unshift(card) as Deck<C>
+}
 
-    top() : C|undefined{
-        return this.cards.first()
-    }
-    
-    // Maybe it won't be needed as compared to the OOP, we handle top and peek the same way here
-    peek() : C|undefined{
-        return this.cards.first()
-    }
+export function filter<C extends Card, S extends C>(
+    deck: Deck<C>, 
+    predicate: (card: C, index: number) => card is S
+): Deck<S>
 
-    getDeckUnderTop() : Deck<C>{
-        return new Deck(this.cards.shift()) 
-    }
+export function filter<C extends Card>(
+    deck: Deck<C>, 
+    predicate: (card: C, index: number) => boolean
+): Deck<C>
 
-    putCardOnTop(card:C) : Deck<C>{
-        return new Deck(this.cards.unshift(card))
-    }
-
-
+export function filter(deck: Deck<Card>, predicate: any): any {
+    const cards = deck.filter(predicate as any)
+    return cards as Deck<Card>
 }
 
 
-export function createInitialDeck(): Deck {
+export function createInitialDeck(): Deck<Card> {
     const cards: List<Card> = List<Card>().withMutations(cs => {
         for (const n of cardNumbers.slice(1)) {
             for (const color of colors) {
@@ -119,7 +111,7 @@ export function createInitialDeck(): Deck {
 
         for (let i = 0; i < 4; i++) {
             cs.push({ type: 'WILD' })
-            cs.push({ type: 'WILD DRAW' })
+            cs.push({ type: 'WILD_DRAW' })
         }
 
         cs.push({ type: 'NUMBERED', color: 'BLUE', number: 0 })
@@ -127,14 +119,14 @@ export function createInitialDeck(): Deck {
         cs.push({ type: 'NUMBERED', color: 'GREEN', number: 0 })
         cs.push({ type: 'NUMBERED', color: 'YELLOW', number: 0 })
     })
-    return new Deck<Card>(cards)
+    return cards as Deck<Card>
 }
 
-export function createEmptyDeck(): Deck {
-  return new Deck(List());
+export function createEmptyDeck(): Deck<Card> {
+    return List() as Deck<Card>;
 }
 
 
-export function createDeckWithCards(cards: Card[]): Deck {
-  return new Deck(List(cards));
+export function createDeckWithCards(cards: Card[]): Deck<Card> {
+  return List(cards) as Deck<Card>;
 }
