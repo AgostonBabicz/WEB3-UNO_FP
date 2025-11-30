@@ -1,7 +1,7 @@
-import { query } from '../utils/pg'
+import { query } from '../utils/pg.js'
 import { SQL as sql } from 'sql-template-strings'
-import { CreateGameInput, GetGameInput, PlayerJoinsGameInput } from '../inputs/gameInputs'
-import { CRUD } from './interface/crud'
+import { CreateGameInput, GetGameInput, PlayerJoinsGameInput } from '../inputs/gameInputs.js'
+import { CRUD } from './interface/crud.js'
 
 export class GameRepository implements CRUD<GameRepository> {
   id: string
@@ -42,7 +42,7 @@ export class GameRepository implements CRUD<GameRepository> {
     `)
   }
 
-  // stubs
+
   get(): Promise<GameRepository[]> {
     throw new Error('Not implemented')
   }

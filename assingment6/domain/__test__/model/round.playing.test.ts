@@ -1,6 +1,6 @@
 import { describe, it, test, expect, beforeEach, jest } from '@jest/globals'
 import { createRound, createInitialDeck } from '../utils/test_adapter'
-import { Round,canPlayAny, draw, play, topOfDiscard } from '../../src/models/round'
+import { canPlayAny, draw, play, Round, topOfDiscard } from '../../src/model/round'
 import {
   deterministicShuffle as deterministicShuffler,
   noShuffle,
@@ -9,6 +9,7 @@ import {
 } from '../utils/shuffling'
 import { is } from '../utils/predicates'
 import { standardShuffler } from '../../src/utils/random_utils'
+import { toCardsArray } from '../../src/model/player_hand'
 
 describe('Playing a card', () => {
   it('throws on illegal plays', () => {
@@ -46,13 +47,10 @@ describe('Playing a card', () => {
     })
     it('removes the card from the players hand', () => {
       round = play(0, undefined, round)
-      expect(round.playerHands.get(0)!.size()).toEqual(6)
+      expect(toCardsArray(round.playerHands.get(0)!).length).toEqual(6)
     })
     it('places the card on the discard pile', () => {
-      const card = round.playerHands
-        .get(round.playerInTurn!)
-        ?.getPlayerHand()
-        .get(0)
+      const card = toCardsArray(round.playerHands.get(round.playerInTurn!)!)[0]
       round = play(0, undefined, round)
       expect(topOfDiscard(round)).toEqual(card)
     })
@@ -172,7 +170,7 @@ describe('Playing a card', () => {
     })
     it('gives the next player 2 cards', () => {
       round = play(0, undefined, round)
-      expect(round.playerHands.get(1)!.size()).toEqual(9)
+      expect(toCardsArray(round.playerHands.get(1)!).length).toEqual(9)
     })
     it('takes the 2 cards from the draw pile', () => {
       const pileSize = round.drawDeck.size
@@ -241,7 +239,7 @@ describe('Playing a card', () => {
         shuffler,
       })
       round = play(0, 'RED', round)
-      expect(round.playerHands.get(1)!.size()).toEqual(11)
+      expect(toCardsArray(round.playerHands.get(1)!).length).toEqual(11)
     })
     it('takes the 4 cards from the draw pile', () => {
       const shuffler = builder.build()
@@ -381,7 +379,7 @@ describe('Drawing a card', () => {
         shuffler,
       })
       round = draw(round)
-      expect(round.playerHands.get(0)!.size()).toEqual(8)
+      expect(toCardsArray(round.playerHands.get(0)!).length).toEqual(8)
     })
     it('adds the top of the draw pile to the end of the hand', () => {
       const shuffler = builder
@@ -396,7 +394,7 @@ describe('Drawing a card', () => {
       round = draw(round)
       expect(
         is({ type: 'DRAW', color: 'GREEN' })(
-          round.playerHands.get(0)!.getPlayerHand().get(7)
+          toCardsArray(round.playerHands.get(0)!)[7]
         )
       ).toBeTruthy()
     })
@@ -461,20 +459,20 @@ describe('Drawing a card', () => {
       })
       it('begins with player 0 drawing a playable card', () => {
         round = draw(round)
-        expect(round.playerHands.get(0)!.size()).toEqual(2)
+        expect(toCardsArray(round.playerHands.get(0)!).length).toEqual(2)
         expect(round.playerInTurn).toEqual(0)
       })
       it('proceeds with player 0 playing the drawn card, skipping player 1', () => {
         round = draw(round)
         round = play(1, undefined, round)
-        expect(round.playerHands.get(0)!.size()).toEqual(1)
+        expect(toCardsArray(round.playerHands.get(0)!).length).toEqual(1)
         expect(round.playerInTurn).toEqual(2)
       })
       it('proceeds with player drawing an unplayable card', () => {
         round = draw(round)
         round = play(1, undefined, round)
         round = draw(round)
-        expect(round.playerHands.get(2)!.size()).toEqual(2)
+        expect(toCardsArray(round.playerHands.get(2)!).length).toEqual(2)
         expect(round.playerInTurn).toEqual(3)
       })
       it('proceeds with shuffling to create a new draw pile', () => {
@@ -519,7 +517,7 @@ describe('Drawing a card', () => {
         round = play(1, undefined, round)
         round = draw(round)
         round = draw(round)
-        expect(round.playerHands.get(3)!.getPlayerHand().get(1)).toEqual(card)
+        expect(toCardsArray(round.playerHands.get(3)!)[1]).toEqual(card)
       })
     })
   })
@@ -548,18 +546,32 @@ describe('Drawing a card', () => {
       cardsPerPlayer: 1,
     })
     test('playing', () => {
+      console.log("drawDeck size: ",round.drawDeck.size)
+      console.log("discardDec size: ",round.discardDeck.size)
       round = draw(round)
+      console.log("drawDeck size: ",round.drawDeck.size)
+      console.log("discardDec size: ",round.discardDeck.size)
       round = play(1, undefined, round)
       round = draw(round)
+      console.log("drawDeck size: ",round.drawDeck.size)
+      console.log("discardDec size: ",round.discardDeck.size)
       expect(round.playerInTurn).toBe(1)
-      expect(round.playerHands.get(1)!.getPlayerHand().get(1)!.type).toEqual(
+      expect(toCardsArray(round.playerHands.get(1)!)[1]!.type).toEqual(
         'DRAW'
       )
       expect(round.drawDeck.size).toEqual(1)
       round = play(1, undefined, round)
-      expect(round.playerHands.get(2)!.size()).toEqual(3)
+      console.log("drawDeck size: ",round.drawDeck.size)
+      console.log("discardDec size: ",round.discardDeck.size)
+      expect(toCardsArray(round.playerHands.get(2)!).length).toEqual(3)
+      console.log("drawDeck size: ",round.drawDeck.size)
+      console.log("discardDec size: ",round.discardDeck.size)
+      console.log("drawDeck: ",round.drawDeck.get(0))
       expect(round.discardDeck.size).toEqual(1)
+      console.log("drawDeck size: ",round.drawDeck.size)
+      console.log("drawDeck: ",round.drawDeck.get(0))
       expect(round.drawDeck.size).toEqual(1)
+      
     })
   })
 })

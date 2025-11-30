@@ -7,7 +7,8 @@ import {
   successiveShufflers,
 } from '../utils/shuffling'
 import * as _ from 'lodash'
-import { Round } from '../../src/models/round'
+import { Round } from '../../src/model/round'
+import { toCardsArray } from '../../src/model/player_hand'
 
 const normalShuffle = shuffleBuilder()
   .discard()
@@ -53,7 +54,7 @@ describe('Round set up', () => {
     expect(mockShuffler).toBeCalledTimes(1)
   })
   it('deals 7 cards to each player', () => {
-    round.playerHands.forEach((hand) => expect(hand.size()).toEqual(7))
+    round.playerHands.forEach((hand) => expect(toCardsArray(hand).length).toEqual(7))
   })
   it('deals 7 cards to each player from the top of the deck', () => {
     const cards = normalShuffle(initialDeck.toArray())
@@ -63,7 +64,7 @@ describe('Round set up', () => {
       shuffler: deterministicShuffle(cards),
     })
     round.playerHands.forEach((hand, playerIndex) =>
-      expect(hand.getPlayerHand().toArray()).toEqual(
+      expect(toCardsArray(hand)).toEqual(
         cards.slice(7 * playerIndex, 7 * (playerIndex + 1))
       )
     )
@@ -176,6 +177,6 @@ describe('Before first action in round', () => {
       dealer: 1,
       shuffler,
     })
-    expect(round.playerHands.get(2)!.size()).toBe(9)
+    expect(toCardsArray(round.playerHands.get(2)!).length).toBe(9)
   })
 })

@@ -1,14 +1,16 @@
-export * from './models/common' // UUID
+import { parseCard, parseEvent, parseGame, parseRound, toDomainCard, toDomainGame } from './model/common'
+
+export * from './model/common'
 export type { 
   Game, 
   Props,
 
-} from './models/uno'
+} from './model/uno'
 
 export type { 
   Round, 
   Direction 
-} from './models/round'
+} from './model/round'
 
 export type { 
   CardNumber,
@@ -16,20 +18,19 @@ export type {
   Card, 
   Color, 
   Deck, 
-  CardType, 
   NumberCard, 
   SpecialCard, 
   WildCard,
   ColoredCard
-} from './models/deck'
+} from './model/deck'
 
 export type { 
   PlayerHand 
-} from './models/player_hand'
+} from './model/player_hand'
 
-export * from './models/gameResolverTypes'
-export * from './models/events'
-export * from './models/dtos'
+export * from './model/gameResolverTypes'
+export * from './model/events'
+export * from './model/dtos'
 
 export {
   createGame,
@@ -39,7 +40,7 @@ export {
   startNewRound as startNewRoundModel,
   resolveRoundEnd,
   player as getGamePlayerName 
-} from './models/uno'
+} from './model/uno'
 
 export {
   createRound,
@@ -57,7 +58,7 @@ export {
   score as roundScore,
   checkUnoFailure,
   catchUnoFailure
-} from './models/round'
+} from './model/round'
 
 export {
   createInitialDeck,
@@ -67,15 +68,24 @@ export {
   isWild,
   shuffle as deckShuffle,
   top as deckTop,
-  size as deckSize,
+  deckSize as deckSize,
   deal as deckDeal,
   toArray as deckToArray
-} from './models/deck'
+} from './model/deck'
 
 
 export {
   createHand,
   add as handAdd,
   remove as handRemove,
-  toArray as handToArray
-} from './models/player_hand'
+  toCardsArray as handToArray
+} from './model/player_hand'
+
+export {
+  parseCard,
+  parseRound,
+  parseGame,
+  parseEvent,
+  toDomainCard,
+  toDomainGame
+}

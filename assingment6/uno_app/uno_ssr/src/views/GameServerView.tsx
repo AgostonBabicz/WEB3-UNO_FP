@@ -50,7 +50,7 @@ const GameServerView: React.FC = () => {
 
   const roundStarted = !!game?.currentRound
   const enoughPlayers = players.length >= 2
-  const currentTurn: number | null = game?.currentRound?.currentPlayerIndex ?? null // 'currentPlayerIndex' in domain
+  const currentTurn: number | null = game?.currentRound?.currentPlayerIndex ?? null
   const myTurn = roundStarted && meIndex != null && currentTurn != null && currentTurn === meIndex
   const yourHand = myHand
   const discardTop = game?.currentRound?.discardDeck.first() 
@@ -111,9 +111,6 @@ const GameServerView: React.FC = () => {
     await dispatch(StartRoundThunk())
   }
 
-  // const handleCloseMessage = () => {
-  //   dispatch(serverGameActions.clearMessage())
-  // }
 
   const visibleOpponents = players.filter((_, i) => i !== meIndex)
 

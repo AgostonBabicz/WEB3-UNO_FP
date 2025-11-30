@@ -14,7 +14,6 @@ const startRound = () => async (dispatch: AppDispatch, getState: () => RootState
     const game = await api.startRound(gameId, userId)
     
     dispatch(serverGameActions.setGame(game))
-    // Immediately fetch new cards
     await dispatch(RefreshHand())
     
     return game

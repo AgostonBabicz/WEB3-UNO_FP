@@ -1,9 +1,9 @@
 import { Card, Game } from '@uno/domain'
-import { GameRepository } from '../../repository/gameRepository'
-import { RoundRepository } from '../../repository/roundRepository'
-import { roundGetHand } from '@uno/domain'
+import { GameRepository } from '../../repository/gameRepository.js'
+import { RoundRepository } from '../../repository/roundRepository.js'
+import Domain from '@uno/domain'
+const { roundGetHand } = Domain
 
-// Minimal DTOs so we never import the old GameRuntime again
 export type PersistScoreRow = {
   userId: string | null
   name: string
@@ -36,7 +36,6 @@ function computePointsFromHands(hands: Card[][], winnerIx: number): { perPlayer:
   return { perPlayer }
 }
 
-// Persist game creation. We only need the scalars.
 export async function persistGameCreate(
   gameId: string,
   game: Game,
@@ -63,7 +62,6 @@ export async function persistGameCreate(
   }
 }
 
-// Persist that a user joined seatIndex
 export async function persistPlayerJoin(
   gameId: string,
   userId: string | null,
@@ -80,7 +78,6 @@ export async function persistPlayerJoin(
     .catch(console.error)
 }
 
-// Persist round start
 export async function persistRoundStart(
   gameId: string,
   roundNo: number,
@@ -100,7 +97,6 @@ export async function persistRoundStart(
   return row?.id
 }
 
-// Persist round finish, computing points from the model’s memento
 export async function persistRoundFinish(
   gameId: string,
   game: Game,
@@ -131,7 +127,7 @@ export async function persistRoundFinish(
     if (roundRowId) {
       await rrepo.finish({
         id: roundRowId,
-        winnerUserId: winnerUserId ?? undefined,
+        winnerUserId: winnerUserId ?? null,
         scores,
         endedAt: new Date().toISOString(),
       })
@@ -144,7 +140,7 @@ export async function persistRoundFinish(
       if (started) {
         await rrepo.finish({
           id: started.id,
-          winnerUserId: winnerUserId ?? undefined,
+          winnerUserId: winnerUserId ?? null,
           scores,
           endedAt: new Date().toISOString(),
         })

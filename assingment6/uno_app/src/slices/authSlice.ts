@@ -21,7 +21,6 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    // Synchronous Actions
     authStart(state) {
       state.status = 'loading'
       state.error = null
@@ -57,7 +56,6 @@ const authSlice = createSlice({
 export const authActions = authSlice.actions
 export const { logout, clearAuthError } = authSlice.actions
 
-// Selectors
 export const selectAuth = (state: RootState) => state.auth
 export const selectIsAuthed = (state: RootState) => state.auth.isAuthed
 export const selectUsername = (state: RootState) => state.auth.username

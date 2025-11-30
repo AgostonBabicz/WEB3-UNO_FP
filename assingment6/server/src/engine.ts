@@ -2,7 +2,8 @@ import { v4 as uuid } from 'uuid'
 
 
 import type { Game, Round, Card, Color } from '@uno/domain'
-import {
+import Domain from '@uno/domain'
+const {
   createModelGame,
   applyRoundStep,
   startNewRoundModel,
@@ -17,8 +18,8 @@ import {
   roundDrawPile,
   deckTop,
   deckSize
-} from '@uno/domain'
-import { persistGameCreate, persistRoundStart } from './helpers/game/persistanceFunctions'
+} = Domain
+import { persistGameCreate, persistRoundStart } from './helpers/game/persistanceFunctions.js'
 
 export type PublishFn = (evt: any) => void
 
@@ -73,7 +74,6 @@ function getPlayerIds(g: Game, count: number): string[] {
     ids = Array.from({ length: count }, () => uuid())
     PLAYER_IDS.set(g, ids)
   } else if (ids.length < count) {
-    // append ids for newly added players
     for (let i = ids.length; i < count; i++) ids.push(uuid())
   } else if (ids.length > count) {
     ids = ids.slice(0, count)
@@ -296,7 +296,6 @@ export function playCard(
         publish,
       )
     } else {
-      // SKIP
       const color = gqlCard.color
       notify(
         gameId,
@@ -306,7 +305,6 @@ export function playCard(
       )
     }
 
-    // Only publish CardPlayed while a round still exists
     publish({
       __typename: 'CardPlayed',
       gameId,
@@ -318,7 +316,6 @@ export function playCard(
 
   const view = gameView(ng, gameId)
 
-  // GameUpdated is always published, even when the game is over
   publish({ __typename: 'GameUpdated', game: view })
   return view
 }
@@ -373,7 +370,6 @@ export function accuseUno(
   return view
 }
 
-// ------------------------ internals ------------------------
 
 function must(gameId: string): Game {
   const g = GAMES.get(gameId)

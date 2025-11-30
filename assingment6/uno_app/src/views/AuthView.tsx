@@ -51,9 +51,7 @@ const AuthView: React.FC = () => {
       } else {
         await dispatch(RegisterThunk(payload))
       }
-      // navigation happens in useEffect when isAuthed flips true
     } catch (err: any) {
-      // thunk already put error in store, but just in case
       setLocalError(err?.message ?? 'Authentication failed')
     }
   }

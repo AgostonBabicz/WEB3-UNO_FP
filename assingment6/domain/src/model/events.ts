@@ -2,8 +2,8 @@ import { UUID } from './common'
 import { Card, Color } from './deck'
 import { Game } from './uno'
 
-// Events (union members)
-export type PlayerJoined = { gameId: UUID; playerIndex: number; player: string } // simplified player to string name
+
+export type PlayerJoined = { gameId: UUID; playerIndex: number; player: string } 
 export type GameStarted = { gameId: UUID; game: Game }
 export type TurnChanged = { gameId: UUID; playerInTurnIndex: number }
 export type CardPlayedEvt = {
